@@ -78,30 +78,35 @@ async def lifespan(app: FastAPI):
     pool = None
     arq_redis = None
     checkpointer_context = None
+    redis_startup_task = None
     database_startup_task = None
     app.state.arq_redis = None
     app.state.arq_worker_process = None
 
-    try:
-        pool = ConnectionPool.from_url(
-            settings.REDIS_URL,
-            decode_responses=True,
-            socket_timeout=5.0,
-            socket_connect_timeout=5.0,
-            socket_keepalive=True,
-            health_check_interval=30,
-            retry_on_timeout=True,
-        )
-        redis_client = Redis(connection_pool=pool)
-        await redis_client.ping()
-        configure_redis(redis_client)
-        arq_redis = await create_pool(_build_arq_settings())
-        app.state.arq_redis = arq_redis
-        app.state.arq_worker_process = _start_arq_worker_process()
-    except Exception:
-        redis_client = None
-        pool = None
-        arq_redis = None
+    async def initialize_redis_services():
+        nonlocal redis_client, pool, arq_redis
+        try:
+            pool = ConnectionPool.from_url(
+                settings.REDIS_URL,
+                decode_responses=True,
+                socket_timeout=5.0,
+                socket_connect_timeout=5.0,
+                socket_keepalive=True,
+                health_check_interval=30,
+                retry_on_timeout=True,
+            )
+            redis_client = Redis(connection_pool=pool)
+            await redis_client.ping()
+            configure_redis(redis_client)
+            arq_redis = await create_pool(_build_arq_settings())
+            app.state.arq_redis = arq_redis
+            app.state.arq_worker_process = _start_arq_worker_process()
+        except Exception:
+            redis_client = None
+            pool = None
+            arq_redis = None
+
+    redis_startup_task = asyncio.create_task(initialize_redis_services())
 
     async def initialize_database_services():
         nonlocal checkpointer_context
@@ -143,6 +148,9 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        if redis_startup_task is not None and not redis_startup_task.done():
+            redis_startup_task.cancel()
+            await asyncio.gather(redis_startup_task, return_exceptions=True)
         if database_startup_task is not None and not database_startup_task.done():
             database_startup_task.cancel()
             await asyncio.gather(

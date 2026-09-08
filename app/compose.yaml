@@ -8,11 +8,10 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - .:/app/app
+      - .:/app
     environment:
       PORT: 8000
       ARQ_AUTOSTART_WORKER: "true"
-      REDIS_URL: redis://redis:6379/0
     depends_on:
       - redis
   worker:
@@ -23,13 +22,10 @@ services:
       - .env
     command: python -m arq api.background_tasks.arq_worker.WorkerSettings
     volumes:
-      - .:/app/app
-    environment:
-      REDIS_URL: redis://redis:6379/0
+      - .:/app
     depends_on:
       - redis
   redis:
-    # AsyncRedisSaver requires RedisJSON and RediSearch, included in Redis Stack.
     image: redis/redis-stack-server:latest
     volumes:
       - ./redis.conf:/redis-stack.conf:ro
