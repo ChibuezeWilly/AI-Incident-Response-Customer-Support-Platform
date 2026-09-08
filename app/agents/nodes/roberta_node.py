@@ -29,27 +29,6 @@ for filename in required_files:
         raise FileNotFoundError(f"Required model file is missing: {file_path}")
 
 
-model_weights = [
-    MODEL_DIR / "model.safetensors",
-    MODEL_DIR / "pytorch_model.bin",
-]
-
-if not any(path.exists() for path in model_weights):
-    raise FileNotFoundError(f"No model weights found inside: {MODEL_DIR}")
-
-tokenizer = AutoTokenizer.from_pretrained(
-    str(MODEL_DIR),
-    local_files_only=True,
-)
-
-
-model = AutoModelForSequenceClassification.from_pretrained(
-    str(MODEL_DIR),
-    local_files_only=True,
-)
-
-# The training dataset uses this fixed class order. The saved model currently
-# exposes generic LABEL_n names, so the model's numeric id maps to this list.
 encoder_classes = [
     "Billing and Payments",
     "Customer Service",
@@ -63,24 +42,52 @@ encoder_classes = [
     "Technical Support",
 ]
 
-if model.config.num_labels != len(encoder_classes):
-    raise ValueError(
-        f"Model expects {model.config.num_labels} labels, "
-        f"but encoder contains {len(encoder_classes)} labels."
+model = None
+ticket_router = None
+label_to_id: dict[str, int] = {}
+
+
+def _load_classifier():
+    """Load the local classifier only when a ticket needs it."""
+    global model, ticket_router, label_to_id
+
+    if ticket_router is not None:
+        return ticket_router
+
+    model_weights = [
+        MODEL_DIR / "model.safetensors",
+        MODEL_DIR / "pytorch_model.bin",
+    ]
+    if not any(path.exists() for path in model_weights):
+        raise FileNotFoundError(f"No model weights found inside: {MODEL_DIR}")
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        str(MODEL_DIR),
+        local_files_only=True,
+    )
+    model = AutoModelForSequenceClassification.from_pretrained(
+        str(MODEL_DIR),
+        local_files_only=True,
     )
 
-label_to_id = {
-    str(label): int(index)
-    for label, index in model.config.label2id.items()
-}
+    if model.config.num_labels != len(encoder_classes):
+        raise ValueError(
+            f"Model expects {model.config.num_labels} labels, "
+            f"but encoder contains {len(encoder_classes)} labels."
+        )
 
-ticket_router = pipeline(
-    task="text-classification",
-    model=model,
-    tokenizer=tokenizer,
-    max_length=512,
-    truncation=True,
-)
+    label_to_id = {
+        str(label): int(index)
+        for label, index in model.config.label2id.items()
+    }
+    ticket_router = pipeline(
+        task="text-classification",
+        model=model,
+        tokenizer=tokenizer,
+        max_length=512,
+        truncation=True,
+    )
+    return ticket_router
 
 
 async def run_local_classifier(
@@ -101,7 +108,7 @@ async def run_local_classifier(
     else:
         full_ticket_text = f"Subject: {subject}\n" f"Body: {body}"
 
-    prediction: dict[str, Any] = ticket_router(full_ticket_text)[0]
+    prediction: dict[str, Any] = _load_classifier()(full_ticket_text)[0]
 
     predicted_label = str(prediction["label"])
     confidence = float(prediction["score"])

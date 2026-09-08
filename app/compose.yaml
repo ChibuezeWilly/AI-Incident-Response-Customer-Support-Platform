@@ -11,6 +11,7 @@ services:
       - .:/app/app
     environment:
       PORT: 8000
+      ARQ_AUTOSTART_WORKER: "true"
       REDIS_URL: redis://redis:6379/0
     depends_on:
       - redis

@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, APIRouter, status
 from ...model.schemas.model_health import HealthResponse, MetricsResponse
-from ...agents.nodes.roberta_node import model
+from ...agents.nodes import roberta_node
 from ...database.postgres.database import get_db
 from sqlalchemy.orm import Session
 from ...database.postgres import models
@@ -15,9 +15,9 @@ router = APIRouter(
 @router.get("/health", response_model=HealthResponse)
 def get_health():
     return {
-        "status": "Healthy" if model is not None else "Unavailable",
-        "model_loaded": model is not None,
-        "vectorizer_loaded": model is not None,
+        "status": "Healthy" if roberta_node.model is not None else "Unavailable",
+        "model_loaded": roberta_node.model is not None,
+        "vectorizer_loaded": roberta_node.model is not None,
         "version": "1.0.1",
     }
     
