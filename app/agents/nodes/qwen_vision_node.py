@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from ..state import GraphState
 from huggingface_hub import InferenceClient
 
-BASE_DIR = Path(__file__).resolve().parents[3]
+BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(dotenv_path=BASE_DIR / ".env")
 
 # System prompt for structured vision analysis

@@ -4,33 +4,32 @@ from urllib.parse import urlparse, urlunparse
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-BASE_DIR = Path(__file__).resolve().parents[3]
-DEFAULT_DATABASE_URL = "sqlite:///./incident_response.db"
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
 
-    DATABASE_URL: str = DEFAULT_DATABASE_URL
-    SECRET_KEY: str = "dev-only-secret-key"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    HF_TOKEN: str = ""
-    META_KEY: str = ""
-    QWEN_KEY: str = ""
-    GOOGLE_AI_KEY: str = ""
-    GROQ_KEY: str = ""
-    REDIS_URL: str = "redis://localhost:6379/0"
-    CHROMADB_API_KEY: str = ""
-    CHROMADB_TENANT: str = ""
-    CHROMADB_DATABASE: str = ""
-    AGENTMAIL_API_KEY: str = ""
-    AGENT_DISPLAY_NAME: str = ""
-    JIRA_API_KEY: str = ""
-    JIRA_EMAIL: str = ""
-    JIRA_BASE_URL: str = ""
-    JIRA_PROJECT_KEY: str = "KAN"
-    LANGFUSE_SECRET_KEY: str = ""
-    LANGFUSE_PUBLIC_KEY: str = ""
-    LANGFUSE_BASE_URL: str = ""
+    DATABASE_URL: str
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    HF_TOKEN: str
+    META_KEY: str
+    QWEN_KEY: str
+    GOOGLE_AI_KEY: str
+    GROQ_KEY: str
+    REDIS_URL: str 
+    CHROMADB_API_KEY: str
+    CHROMADB_TENANT: str
+    CHROMADB_DATABASE: str
+    AGENTMAIL_API_KEY: str
+    AGENT_DISPLAY_NAME: str
+    JIRA_API_KEY: str
+    JIRA_EMAIL: str
+    JIRA_BASE_URL: str
+    JIRA_PROJECT_KEY: str
+    LANGFUSE_SECRET_KEY: str
+    LANGFUSE_PUBLIC_KEY: str
+    LANGFUSE_BASE_URL: str
     ARQ_AUTOSTART_WORKER: bool = True
     ARQ_WORKER_COMMAND: str = "python -m arq app.api.background_tasks.arq_worker.WorkerSettings"
     ARQ_WORKER_BOOT_ENV: str = "ARQ_WORKER_BOOTED"
