@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     LANGFUSE_PUBLIC_KEY: str
     LANGFUSE_BASE_URL: str
     ARQ_AUTOSTART_WORKER: bool = True
-    ARQ_WORKER_COMMAND: str = "python -m arq app.api.background_tasks.arq_worker.WorkerSettings"
+    ARQ_WORKER_COMMAND: str = "python -m arq api.background_tasks.arq_worker.WorkerSettings"
     ARQ_WORKER_BOOT_ENV: str = "ARQ_WORKER_BOOTED"
 
     model_config = SettingsConfigDict(

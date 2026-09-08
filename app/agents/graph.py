@@ -1,15 +1,15 @@
 from langgraph.graph import StateGraph, START, END
-from .nodes.node_triager_agent import node_triager
-from .nodes.rag_node import perform_rag
-from .nodes.evaluator_node import evaluate_retrieved_docs, conditional_routing
-from .state import GraphState
-from .nodes.roberta_node import run_local_classifier
-from .nodes.human_escalation import node_human_review_generator
-from .nodes.qwen_vision_node import process_ticket_image
+from agents.nodes.node_triager_agent import node_triager
+from agents.nodes.rag_node import perform_rag
+from agents.nodes.evaluator_node import evaluate_retrieved_docs, conditional_routing
+from agents.state import GraphState
+from agents.nodes.roberta_node import run_local_classifier
+from agents.nodes.human_escalation import node_human_review_generator
+from agents.nodes.qwen_vision_node import process_ticket_image
 
 workflow = StateGraph(GraphState)
 
-from ..api.background_tasks.escalate import escalate_to_l3
+from api.background_tasks.escalate import escalate_to_l3
 
 async def node_send_to_l3_engineering(state: GraphState) -> dict:
     """Adapt the Jira service function to LangGraph's state-node contract."""

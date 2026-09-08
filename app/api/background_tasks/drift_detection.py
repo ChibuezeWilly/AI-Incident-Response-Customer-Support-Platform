@@ -6,10 +6,10 @@ from langchain_core.output_parsers import PydanticOutputParser
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from ...cache import cache_drift_alert
-from ...database.postgres import models
-from ...database.postgres.database import get_db
-from ...model.schemas.schema import AllDrift, Drift, DriftAlert
+from cache import cache_drift_alert
+from database.postgres import models
+from database.postgres.database import get_db
+from model.schemas.schema import AllDrift, Drift, DriftAlert
 
 client = InferenceClient(api_key=os.getenv("HF_TOKEN"))
 

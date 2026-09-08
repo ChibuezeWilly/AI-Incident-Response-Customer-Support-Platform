@@ -1,5 +1,5 @@
-from ..state import GraphState, RagState
-from ...rag.retrieval import get_retriever
+from agents.state import GraphState, RagState
+from rag.retrieval import get_retriever
 
 def perform_rag(state: GraphState) -> dict:
     # 1. Fetch query directly from state

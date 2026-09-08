@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from ...agents.state import GraphState
+from agents.state import GraphState
 
 import httpx
 
 from fastapi import status, HTTPException
 
-from ...database.postgres.database import get_db_ctx
-from ...database.postgres import models
-from ...database.postgres.config import settings
+from database.postgres.database import get_db_ctx
+from database.postgres import models
+from database.postgres.config import settings
 
 jira_api_key = settings.JIRA_API_KEY
 jira_username = settings.JIRA_EMAIL
@@ -401,7 +401,7 @@ async def escalate_to_l3(
     thread_id is supplied.
     """
 
-    from ...agents.graph import get_graph
+    from agents.graph import get_graph
 
     if isinstance(state_or_thread_id, str):
 

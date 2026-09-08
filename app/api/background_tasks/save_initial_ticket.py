@@ -1,5 +1,5 @@
-from ...database.postgres import models
-from ...database.postgres.database import get_db_ctx
+from database.postgres import models
+from database.postgres.database import get_db_ctx
 
 
 def save_human_review(

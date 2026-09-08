@@ -3,7 +3,7 @@ import chromadb
 from rank_bm25 import BM25Okapi
 import os
 from dotenv import load_dotenv
-from ..paths import PROJECT_ROOT
+from paths import PROJECT_ROOT
 
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")

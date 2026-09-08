@@ -3,9 +3,9 @@ from typing import Any
 
 from fastapi import HTTPException, status
 
-from ...agents.graph import get_graph
-from ...database.postgres import models
-from ...database.postgres.database import get_db_ctx
+from agents.graph import get_graph
+from database.postgres import models
+from database.postgres.database import get_db_ctx
 
 
 def _as_dict(value: Any) -> dict[str, Any] | None:

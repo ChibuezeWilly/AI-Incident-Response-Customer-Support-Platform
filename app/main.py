@@ -15,8 +15,8 @@ from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-
-from .api.routers import (
+# 1. Absolute imports from root
+from api.routers import (
     admin,
     admin_fetch_tickets,
     authentication,
@@ -25,20 +25,20 @@ from .api.routers import (
     tickets,
     users,
 )
-from .database.postgres.config import (
+from database.postgres.config import (
     settings,
     resolve_postgres_url,
     resolve_redis_url,
 )
-from .api.background_tasks.drift_detection import node_drift_alert
-from .agents.graph import initialize_graph
-from .cache import configure_redis
+from api.background_tasks.drift_detection import node_drift_alert
+from agents.graph import initialize_graph
+from cache import configure_redis
 
 scheduler = AsyncIOScheduler()
 
 
 def _build_arq_settings() -> RedisSettings:
-    """Create a more resilient ARQ Redis config for local and Docker runs."""
+    """Create a resilient ARQ Redis config for local and Docker runs."""
     arq_settings = RedisSettings.from_dsn(resolve_redis_url(settings.REDIS_URL))
     arq_settings.conn_timeout = 5
     arq_settings.conn_retries = 10
@@ -65,11 +65,10 @@ def _start_arq_worker_process() -> subprocess.Popen[bytes] | None:
     elif command and command[0] == "python":
         command[0] = sys.executable
 
-   
     return subprocess.Popen(
         command,
         env=env,
-        cwd=str(Path(__file__).resolve().parents[1]),
+        cwd=str(Path(__file__).resolve().parent),
     )
 
 
@@ -107,7 +106,9 @@ async def lifespan(app: FastAPI):
     async def initialize_database_services():
         nonlocal checkpointer_context
         try:
-            sanitized_db_url = resolve_postgres_url(settings.DATABASE_URL).replace(
+            sanitized_db_url = resolve_postgres_url(
+                settings.DATABASE_URL
+            ).replace(
                 "postgresql+psycopg://",
                 "postgresql://",
             )
@@ -117,8 +118,8 @@ async def lifespan(app: FastAPI):
                     sanitized_db_url,
                     serde=JsonPlusSerializer(
                         allowed_msgpack_modules=[
-                            ("app.agents.state", "EvaluationResult"),
-                            ("app.agents.state", "AIDraftResolution"),
+                            ("agents.state", "EvaluationResult"),
+                            ("agents.state", "AIDraftResolution"),
                         ]
                     ),
                 )
@@ -136,16 +137,17 @@ async def lifespan(app: FastAPI):
         except Exception:
             checkpointer_context = None
 
-    # Do not block Render's port detection on a database or Redis dependency.
+    # Non-blocking async background task so Render port detection passes instantly
     database_startup_task = asyncio.create_task(initialize_database_services())
 
     try:
-        # Yield control back to FastAPI to process incoming HTTP requests
         yield
     finally:
         if database_startup_task is not None and not database_startup_task.done():
             database_startup_task.cancel()
-            await asyncio.gather(database_startup_task, return_exceptions=True)
+            await asyncio.gather(
+                database_startup_task, return_exceptions=True
+            )
         if scheduler.running:
             scheduler.shutdown(wait=False)
         if checkpointer_context is not None:

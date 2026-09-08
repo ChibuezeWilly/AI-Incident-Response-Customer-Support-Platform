@@ -1,34 +1,34 @@
 from fastapi import Depends, status, HTTPException, APIRouter, BackgroundTasks, Query, Request
 from sqlalchemy import func, case, text
-from ...database.postgres.database import get_db
+from database.postgres.database import get_db
 from sqlalchemy.orm import Session, joinedload
-from ...database.postgres import models
-from ...services.oauth2 import get_current_admin
-from ...agents.state import UserTicketResponse
-from ...agents.graph import get_graph
+from database.postgres import models
+from services.oauth2 import get_current_admin
+from agents.state import UserTicketResponse
+from agents.graph import get_graph
 from typing import Any
-from ..background_tasks import send_processed_ticket
-from ..background_tasks.save_ticket_info import save_ticket_info
-from ...model.schemas.schema import ResolvedTicket, EngineerSolution
-from ...database.postgres.database import get_db
+from api.background_tasks import send_processed_ticket
+from api.background_tasks.save_ticket_info import save_ticket_info
+from model.schemas.schema import ResolvedTicket, EngineerSolution
+from database.postgres.database import get_db
 from sqlalchemy.orm import Session, joinedload
-from ...database.postgres import models
+from database.postgres import models
 from langgraph.types import Command
-from ...agents.state import ApprovalDecision
-from ...agents.graph import get_graph
-from ...agents.state import UserTicketResponse
-from ..background_tasks.send_ticket_response import send_resolved_email
-from ..background_tasks.send_processed_ticket import (
+from agents.state import ApprovalDecision
+from agents.graph import get_graph
+from agents.state import UserTicketResponse
+from api.background_tasks.send_ticket_response import send_resolved_email
+from api.background_tasks.send_processed_ticket import (
     send_resolved_email as send_direct_resolved_email,
 )
-from ..background_tasks.save_ticket_info import save_ticket_info
-from ..background_tasks.semantic_diff import node_semantic_diff
-from ..background_tasks.save_resolved_ticket import save_incoming_resolved_ticket
-from ..background_tasks.save_engineer_resolved_ticket import (
+from api.background_tasks.save_ticket_info import save_ticket_info
+from api.background_tasks.semantic_diff import node_semantic_diff
+from api.background_tasks.save_resolved_ticket import save_incoming_resolved_ticket
+from api.background_tasks.save_engineer_resolved_ticket import (
     save_engineer_resolved_ticket,
 )
-from ..background_tasks.escalate import escalate_to_l3
-from ...cache import get_latest_drift_alert as get_cached_drift_alert
+from api.background_tasks.escalate import escalate_to_l3
+from cache import get_latest_drift_alert as get_cached_drift_alert
 import json
 from datetime import datetime, timedelta
 from huggingface_hub import InferenceClient
@@ -38,7 +38,7 @@ from dotenv import load_dotenv
 import json
 from datetime import datetime, timedelta, timezone  
 from arq.connections import ArqRedis
-from ...paths import PROJECT_ROOT
+from paths import PROJECT_ROOT
 
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 

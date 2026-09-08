@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from pathlib import Path
-from ..paths import PROJECT_ROOT
+from paths import PROJECT_ROOT
 
 # LOAD ENVIRONMENT VARIABLES
 load_dotenv(PROJECT_ROOT / ".env", override=True)

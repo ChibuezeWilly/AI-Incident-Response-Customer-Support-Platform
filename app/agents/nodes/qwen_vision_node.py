@@ -3,7 +3,7 @@ import os
 import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
-from ..state import GraphState
+from agents.state import GraphState
 from huggingface_hub import InferenceClient
 
 BASE_DIR = Path(__file__).resolve().parents[2]

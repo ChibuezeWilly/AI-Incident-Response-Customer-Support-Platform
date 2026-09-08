@@ -13,15 +13,15 @@ from langfuse.langchain import CallbackHandler
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from sqlalchemy.orm import joinedload
-from ...paths import PROJECT_ROOT
+from paths import PROJECT_ROOT
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-from app.agents.graph import initialize_graph, get_graph
-from ...database.postgres.database import get_db_ctx
-from ...database.postgres import models
-from .ticket_payloads import build_recovery_graph_state
-from app.database.postgres.config import (
+from agents.graph import initialize_graph, get_graph
+from database.postgres.database import get_db_ctx
+from database.postgres import models
+from api.background_tasks.ticket_payloads import build_recovery_graph_state
+from database.postgres.config import (
     settings,
     resolve_postgres_url,
     resolve_redis_url,
@@ -156,8 +156,8 @@ async def startup(ctx: dict[str, Any]) -> None:
         sanitized_db_url,
         serde=JsonPlusSerializer(
             allowed_msgpack_modules=[
-                ("app.agents.state", "EvaluationResult"),
-                ("app.agents.state", "AIDraftResolution"),
+                ("agents.state", "EvaluationResult"),
+                ("agents.state", "AIDraftResolution"),
             ]
         ),
     )

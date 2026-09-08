@@ -4,7 +4,7 @@ from typing import Any
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ...database.postgres import models
+    from database.postgres import models
 
 
 def build_initial_graph_state(

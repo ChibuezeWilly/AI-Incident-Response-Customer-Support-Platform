@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Any
-from .schema import TicketContext, BaseResponse
+from model.schemas.schema import TicketContext, BaseResponse
 
 class AdminBase(BaseModel):
     name: str = Field(

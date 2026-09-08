@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
 from agentmail import AgentMail
-from ...paths import PROJECT_ROOT
-from ...agents.graph import get_graph
+from paths import PROJECT_ROOT
+from agents.graph import get_graph
 from fastapi import status, HTTPException
 
 load_dotenv(PROJECT_ROOT / ".env", override=True)

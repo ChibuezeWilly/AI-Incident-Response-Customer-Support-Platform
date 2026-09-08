@@ -8,20 +8,20 @@ from fastapi import (
     Request,
     UploadFile,
 )
-from ...model.schemas.schema import TicketReward
+from model.schemas.schema import TicketReward
 
 import base64
 
 import time
-from ...database.postgres.database import get_db
+from database.postgres.database import get_db
 from sqlalchemy.orm import Session, joinedload
-from ...database.postgres import models
-from ...services.oauth2 import get_current_user
+from database.postgres import models
+from services.oauth2 import get_current_user
 
-from ...cache import (
+from cache import (
     get_global_semantic_cache,
 )
-from ..background_tasks.ticket_payloads import build_initial_graph_state
+from api.background_tasks.ticket_payloads import build_initial_graph_state
 
 from arq.connections import ArqRedis
 

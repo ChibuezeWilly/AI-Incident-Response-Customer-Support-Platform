@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from fastapi import status, HTTPException
-from ...agents.graph import get_graph
-from ...paths import PROJECT_ROOT
+from agents.graph import get_graph
+from paths import PROJECT_ROOT
 
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")

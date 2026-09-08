@@ -1,9 +1,9 @@
 from fastapi import Depends, status, HTTPException, APIRouter
-from ...database.postgres.database import get_db
+from database.postgres.database import get_db
 from sqlalchemy.orm import Session
-from ...database.postgres import models
-from ...model.schemas.schema import BaseResponse as TicketResponse
-from ...services.oauth2 import get_current_admin
+from database.postgres import models
+from model.schemas.schema import BaseResponse as TicketResponse
+from services.oauth2 import get_current_admin
 
 router = APIRouter(prefix="/internal_admin", tags=["Internal Admin"])
 

@@ -4,7 +4,7 @@ from typing import Any
 import chromadb
 from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from ...paths import PROJECT_ROOT
+from paths import PROJECT_ROOT
 
 load_dotenv(PROJECT_ROOT / ".env")
 

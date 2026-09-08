@@ -4,7 +4,7 @@ import os
 from langchain_core.output_parsers import PydanticOutputParser
 from huggingface_hub import InferenceClient
 
-from ..state import EvaluationResult, GraphState
+from agents.state import EvaluationResult, GraphState
 
 
 client = InferenceClient(api_key=os.getenv("HF_TOKEN"))

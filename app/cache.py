@@ -9,9 +9,9 @@ import chromadb
 from dotenv import load_dotenv
 from redis.asyncio import Redis
 
-from .database.postgres.database import get_db_ctx
-from .database.postgres import models
-from .paths import PROJECT_ROOT
+from database.postgres.database import get_db_ctx
+from database.postgres import models
+from paths import PROJECT_ROOT
 
 load_dotenv(dotenv_path=PROJECT_ROOT / ".env", override=True)
 

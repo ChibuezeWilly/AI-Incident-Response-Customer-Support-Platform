@@ -9,7 +9,7 @@ from sqlalchemy import (
     VARCHAR,
     text,
 )
-from .database import Base
+from database.postgres.database import Base
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.orm import relationship

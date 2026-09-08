@@ -1,10 +1,10 @@
 from fastapi import Depends, status, HTTPException, APIRouter, Query
 from sqlalchemy import or_
-from ...model.schemas.account import UserDetails, AllUsers
-from ...database.postgres.database import get_db
+from model.schemas.account import UserDetails, AllUsers
+from database.postgres.database import get_db
 from sqlalchemy.orm import Session
-from ...database.postgres import models
-from ...services import oauth2
+from database.postgres import models
+from services import oauth2
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

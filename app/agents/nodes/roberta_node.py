@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Any
 
-from ...model.schemas.schema import DistilbertOutput
-from ...services.telemetry import telemetry_client
-from ..state import GraphState
+from model.schemas.schema import DistilbertOutput
+from services.telemetry import telemetry_client
+from agents.state import GraphState
 
 MODEL_DIR = (Path(__file__).resolve().parents[2] / "model" / "ml").resolve()
 

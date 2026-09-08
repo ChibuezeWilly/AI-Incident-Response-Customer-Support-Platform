@@ -1,11 +1,11 @@
 from fastapi import Depends, status, HTTPException, APIRouter
-from ...model.schemas.account import AdminCreate, AdminResponse, Login, AdminLoginResponse
-from ...database.postgres.database import get_db
+from model.schemas.account import AdminCreate, AdminResponse, Login, AdminLoginResponse
+from database.postgres.database import get_db
 from sqlalchemy.orm import Session
-from ...services.utils import verify
-from ...database.postgres import models
-from ...services.oauth2 import create_access_token
-from ...services.utils import hash_password
+from services.utils import verify
+from database.postgres import models
+from services.oauth2 import create_access_token
+from services.utils import hash_password
 
 router = APIRouter(
     prefix="/admin/auth",

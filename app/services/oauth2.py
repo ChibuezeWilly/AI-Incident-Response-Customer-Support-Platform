@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta, timezone
 import jwt 
-from ..model.schemas.account import TokenData
+from model.schemas.account import TokenData
 from fastapi import Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from ..database.postgres.database import get_db
+from database.postgres.database import get_db
 from sqlalchemy.orm import Session
-from ..database.postgres import models
-from ..database.postgres.config import settings
+from database.postgres import models
+from database.postgres.config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/login')
 

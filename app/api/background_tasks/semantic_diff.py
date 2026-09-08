@@ -5,11 +5,11 @@ from huggingface_hub import InferenceClient
 from langchain_core.output_parsers import PydanticOutputParser
 from sqlalchemy.orm import Session
 
-from ...agents.graph import get_graph
-from ...agents.state import GraphState
-from ...database.postgres import models
-from ...database.postgres.database import get_db
-from ...model.schemas.schema import SemanticDiff
+from agents.graph import get_graph
+from agents.state import GraphState
+from database.postgres import models
+from database.postgres.database import get_db
+from model.schemas.schema import SemanticDiff
 
 
 client = InferenceClient(api_key=os.getenv("HF_TOKEN"))

@@ -4,8 +4,8 @@ import re
 
 from huggingface_hub import InferenceClient
 
-from ...model.schemas.schema import LlamaOutput
-from ..state import GraphState
+from model.schemas.schema import LlamaOutput
+from agents.state import GraphState
 
 client = InferenceClient(api_key=os.getenv("HF_TOKEN"))
 

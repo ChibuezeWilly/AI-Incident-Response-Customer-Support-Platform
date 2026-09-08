@@ -2,7 +2,7 @@ import os
 
 from agentmail import AgentMail
 from dotenv import load_dotenv
-from ...paths import PROJECT_ROOT
+from paths import PROJECT_ROOT
 
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 
