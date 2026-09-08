@@ -1,0 +1,16 @@
+import * as real from './tickets';
+export const fetchTickets = real.fetchTickets;
+export const createTicket = real.createTicket;
+export const approveTicket = real.approveTicket;
+export const rejectTicket = real.rejectTicket;
+export const deleteTicket = real.deleteTicket;
+export const checkModelHealth = real.checkModelHealth;
+export const fetchAnalytics = real.fetchAnalytics;
+export const fetchLatestAlert = real.fetchLatestAlert;
+export const fetchPendingTickets = real.fetchPendingTickets;
+export const fetchIncidentAnalysis = real.fetchIncidentAnalysis;
+export const fetchProcessedTickets = real.fetchProcessedTickets;
+export const resolveProcessedTicket = real.resolveProcessedTicket;
+export const retryFailedTicket = real.retryFailedTicket;
+export { adminLogin, adminSignup, userLogin, userSignup } from './tickets';
+export { API_BASE_URL } from '../config';

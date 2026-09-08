@@ -1,0 +1,53 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+body {
+  @apply antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-200;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 16px;
+}
+
+/* A calmer visual hierarchy across both customer and admin workspaces. */
+.font-black { font-weight: 600 !important; }
+.font-extrabold, .font-bold { font-weight: 500 !important; }
+
+/* Hide scrollbars globally */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Glow effects and background grids */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(39, 39, 42, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(39, 39, 42, 0.25) 1px, transparent 1px);
+}
+
+.bg-grid-pattern-light {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(148, 163, 184, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.15) 1px, transparent 1px);
+}
+
+.gradient-glow {
+  background: radial-gradient(circle 800px at var(--x, 50%) var(--y, 50%), rgba(99, 102, 241, 0.08), transparent 80%);
+}
+
+.gradient-glow-light {
+  background: radial-gradient(circle 800px at var(--x, 50%) var(--y, 50%), rgba(99, 102, 241, 0.04), transparent 80%);
+}
+
+.glass-panel {
+  @apply bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80;
+}
+
+.glass-panel-light {
+  @apply bg-gray-200/90 backdrop-blur-md border border-slate-200/90 shadow-md shadow-slate-100/50;
+}
