@@ -14,6 +14,7 @@ from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
+
 from .api.routers import (
     admin,
     admin_fetch_tickets,
@@ -73,63 +74,75 @@ def _start_arq_worker_process() -> subprocess.Popen[bytes] | None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Initialize Redis Connection Pool
-    pool = ConnectionPool.from_url(
-        settings.REDIS_URL,
-        decode_responses=True,
-        socket_timeout=5.0,
-        socket_connect_timeout=5.0,
-        socket_keepalive=True,
-        health_check_interval=30,
-        retry_on_timeout=True,
-    )
-    redis_client = Redis(connection_pool=pool)
-    await redis_client.ping()
-    configure_redis(redis_client)
+    redis_client = None
+    pool = None
+    arq_redis = None
+    checkpointer_context = None
+    app.state.arq_redis = None
+    app.state.arq_worker_process = None
 
-    arq_redis = await create_pool(_build_arq_settings())
-    app.state.arq_redis = arq_redis
-    app.state.arq_worker_process = _start_arq_worker_process()
+    try:
+        pool = ConnectionPool.from_url(
+            settings.REDIS_URL,
+            decode_responses=True,
+            socket_timeout=5.0,
+            socket_connect_timeout=5.0,
+            socket_keepalive=True,
+            health_check_interval=30,
+            retry_on_timeout=True,
+        )
+        redis_client = Redis(connection_pool=pool)
+        await redis_client.ping()
+        configure_redis(redis_client)
+        arq_redis = await create_pool(_build_arq_settings())
+        app.state.arq_redis = arq_redis
+        app.state.arq_worker_process = _start_arq_worker_process()
+    except Exception:
+        redis_client = None
+        pool = None
+        arq_redis = None
 
-    # 2. Sanitize Database URL for AsyncPostgresSaver
-    sanitized_db_url = resolve_postgres_url(settings.DATABASE_URL).replace(
-        "postgresql+psycopg://",
-        "postgresql://",
-    )
+    try:
+        sanitized_db_url = resolve_postgres_url(settings.DATABASE_URL).replace(
+            "postgresql+psycopg://",
+            "postgresql://",
+        )
 
-    # 3. Open Checkpointer Context Manager for FastAPI process
-    checkpointer_context = AsyncPostgresSaver.from_conn_string(
-        sanitized_db_url,
-        serde=JsonPlusSerializer(
-            allowed_msgpack_modules=[
-                ("app.agents.state", "EvaluationResult"),
-                ("app.agents.state", "AIDraftResolution"),
-            ]
-        ),
-    )
-    checkpointer = await checkpointer_context.__aenter__()
-    await checkpointer.setup()
+        if sanitized_db_url.startswith("postgresql"):
+            checkpointer_context = AsyncPostgresSaver.from_conn_string(
+                sanitized_db_url,
+                serde=JsonPlusSerializer(
+                    allowed_msgpack_modules=[
+                        ("app.agents.state", "EvaluationResult"),
+                        ("app.agents.state", "AIDraftResolution"),
+                    ]
+                ),
+            )
+            checkpointer = await checkpointer_context.__aenter__()
+            await checkpointer.setup()
 
-    # Initialize graph layout for web server
-    initialize_graph(checkpointer)
+            initialize_graph(checkpointer)
 
-    # 4. Initialize Background Scheduler for Daily Drift Check
-    scheduler.add_job(
-        node_drift_alert,
-        trigger=IntervalTrigger(days=7),
-        id="daily_drift_check",
-        replace_existing=True,
-    )
-    scheduler.start()
+            scheduler.add_job(
+                node_drift_alert,
+                trigger=IntervalTrigger(days=7),
+                id="daily_drift_check",
+                replace_existing=True,
+            )
+            scheduler.start()
+    except Exception:
+        checkpointer_context = None
 
     try:
         # Yield control back to FastAPI to process incoming HTTP requests
         yield
     finally:
-        # 5. Handle Graceful Teardown
-        scheduler.shutdown(wait=False)
-        await checkpointer_context.__aexit__(None, None, None)
-        await arq_redis.aclose()
+        if scheduler.running:
+            scheduler.shutdown(wait=False)
+        if checkpointer_context is not None:
+            await checkpointer_context.__aexit__(None, None, None)
+        if arq_redis is not None:
+            await arq_redis.aclose()
         arq_worker_process = getattr(app.state, "arq_worker_process", None)
         if arq_worker_process is not None and arq_worker_process.poll() is None:
             arq_worker_process.terminate()
@@ -137,8 +150,10 @@ async def lifespan(app: FastAPI):
                 arq_worker_process.wait(timeout=10)
             except subprocess.TimeoutExpired:
                 arq_worker_process.kill()
-        await redis_client.aclose()
-        await pool.aclose()
+        if redis_client is not None:
+            await redis_client.aclose()
+        if pool is not None:
+            await pool.aclose()
 
 
 app = FastAPI(lifespan=lifespan)

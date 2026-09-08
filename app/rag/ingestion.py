@@ -7,15 +7,13 @@ import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from pathlib import Path
+from ..paths import PROJECT_ROOT
 
 # LOAD ENVIRONMENT VARIABLES
-load_dotenv(dotenv_path="../.env", override=True)
+load_dotenv(PROJECT_ROOT / ".env", override=True)
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")
-os.environ["CHROMADB_API_KEY"] = chromadb_api_key
 tenant_key = os.getenv("CHROMADB_TENANT")
-os.environ["CHROMADB_TENANT"] = tenant_key
 database_key = os.getenv("CHROMADB_DATABASE")
-os.environ["CHROMADB_DATABASE"] = database_key
 
 # LOAD DOCUMENT
 CURRENT_DIR = Path(__file__).resolve().parent

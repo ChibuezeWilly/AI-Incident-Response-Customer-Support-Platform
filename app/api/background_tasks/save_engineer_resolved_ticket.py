@@ -4,26 +4,27 @@ import chromadb
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from ...paths import PROJECT_ROOT
 
-load_dotenv()
+load_dotenv(PROJECT_ROOT / ".env")
 
 CHROMADB_API_KEY = os.getenv("CHROMADB_API_KEY")
 CHROMADB_TENANT = os.getenv("CHROMADB_TENANT")
 CHROMADB_DATABASE = os.getenv("CHROMADB_DATABASE")
 
-if not CHROMADB_API_KEY:
-    raise ValueError("CHROMADB_API_KEY is not set")
 
-if not CHROMADB_TENANT:
-    raise ValueError("CHROMADB_TENANT is not set")
-
-if not CHROMADB_DATABASE:
-    raise ValueError("CHROMADB_DATABASE is not set")
+_embedding_model: SentenceTransformer | None = None
 
 
-embedding_model = SentenceTransformer(
-    "sentence-transformers/all-MiniLM-L6-v2"
-)
+def _get_embedding_model() -> SentenceTransformer:
+    global _embedding_model
+
+    if _embedding_model is None:
+        _embedding_model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return _embedding_model
 
 class EmbedResolvedTicket:
 
@@ -69,7 +70,7 @@ class EmbedResolvedTicket:
             for document in documents
         ]
 
-        embeddings = embedding_model.encode(
+        embeddings = _get_embedding_model().encode(
             texts,
             show_progress_bar=True,
         )
@@ -77,6 +78,10 @@ class EmbedResolvedTicket:
         return documents, embeddings
 
     def store_vectors(self):
+        if not CHROMADB_API_KEY or not CHROMADB_TENANT or not CHROMADB_DATABASE:
+            raise RuntimeError(
+                "ChromaDB environment variables are not configured."
+            )
 
         documents, embeddings = self.embed_document()
 

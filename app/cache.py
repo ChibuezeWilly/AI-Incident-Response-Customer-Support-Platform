@@ -12,11 +12,22 @@ from sentence_transformers import SentenceTransformer
 
 from .database.postgres.database import get_db_ctx
 from .database.postgres import models
+from .paths import PROJECT_ROOT
 
-load_dotenv(dotenv_path="../.env", override=True)
+load_dotenv(dotenv_path=PROJECT_ROOT / ".env", override=True)
 
-# 1. LOAD EMBEDDING ENGINE
-embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+_embedding_model: SentenceTransformer | None = None
+
+
+def _get_embedding_model() -> SentenceTransformer:
+    global _embedding_model
+
+    if _embedding_model is None:
+        _embedding_model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return _embedding_model
 
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")
 tenant_key = os.getenv("CHROMADB_TENANT")
@@ -267,7 +278,10 @@ async def get_global_semantic_cache(
         database=database_key
     )
    
-    query_embedding = embedding_model.encode([query_text], show_progress_bar=False)[0]
+    query_embedding = _get_embedding_model().encode(
+        [query_text],
+        show_progress_bar=False,
+    )[0]
     query_vector = query_embedding.tolist()
     resolved_collection = client.get_or_create_collection(name=COLLECTION_NAME)
     history_collection = client.get_or_create_collection(

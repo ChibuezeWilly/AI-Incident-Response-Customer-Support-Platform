@@ -1,27 +1,36 @@
 import os
 from dotenv import load_dotenv
 from agentmail import AgentMail
+from ...paths import PROJECT_ROOT
 from ...agents.graph import get_graph
 from fastapi import status, HTTPException
 
-load_dotenv(dotenv_path="../.env", override=True)
-api_key = os.getenv("AGENTMAIL_API_KEY")
+load_dotenv(PROJECT_ROOT / ".env", override=True)
+client: AgentMail | None = None
+INBOX_ID: str | None = os.getenv("AGENTMAIL_INBOX_ID")
 
-# Initialize client
-client = AgentMail(api_key=api_key)
 
-# create an INBOX ID
-INBOX_ID = os.getenv("AGENTMAIL_INBOX_ID")
-if not INBOX_ID:
-    inbox = client.inboxes.create()
-    INBOX_ID = inbox.inbox_id
+def _get_client() -> AgentMail:
+    global client, INBOX_ID
+
+    if client is None:
+        api_key = os.getenv("AGENTMAIL_API_KEY")
+        if not api_key:
+            raise RuntimeError("AGENTMAIL_API_KEY is not configured.")
+        client = AgentMail(api_key=api_key)
+
+    if not INBOX_ID:
+        inbox = client.inboxes.create()
+        INBOX_ID = inbox.inbox_id
+
+    return client
 
 
 async def send_resolved_email(
     thread_id: str,
     final_response_text: str | None = None,
 ):
-    
+    mail_client = _get_client()
     config = {"configurable": {"thread_id": thread_id}}
    
     ticket_state = await get_graph().aget_state(config)
@@ -44,7 +53,7 @@ async def send_resolved_email(
     email_subject = f"Resolved: {ticket_subject}"
 
 
-    message = client.inboxes.messages.send(
+    message = mail_client.inboxes.messages.send(
         inbox_id=INBOX_ID,
         to=recipient,
         subject=email_subject,

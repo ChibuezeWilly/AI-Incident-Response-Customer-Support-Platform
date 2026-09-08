@@ -1,15 +1,13 @@
 import json
 import os
 
-from huggingface_hub import InferenceClient
 from langchain_core.output_parsers import PydanticOutputParser
+from huggingface_hub import InferenceClient
 
 from ..state import EvaluationResult, GraphState
 
 
-client = InferenceClient(
-    api_key=os.environ["HF_TOKEN"],
-)
+client = InferenceClient(api_key=os.getenv("HF_TOKEN"))
 
 parser = PydanticOutputParser(
     pydantic_object=EvaluationResult

@@ -13,8 +13,9 @@ from langfuse.langchain import CallbackHandler
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from sqlalchemy.orm import joinedload
+from ...paths import PROJECT_ROOT
 
-load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+load_dotenv(PROJECT_ROOT / ".env")
 
 from app.agents.graph import initialize_graph, get_graph
 from ...database.postgres.database import get_db_ctx

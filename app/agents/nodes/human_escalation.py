@@ -9,9 +9,7 @@ from ...api.background_tasks.save_initial_ticket import save_human_review
 from ...database.postgres.database import get_db_ctx
 from ...database.postgres import models
 
-client = InferenceClient(
-    api_key=os.environ["HF_TOKEN"],
-)
+client = InferenceClient(api_key=os.getenv("HF_TOKEN"))
 
 
 def build_generator_prompt(

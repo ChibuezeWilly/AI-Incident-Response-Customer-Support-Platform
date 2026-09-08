@@ -4,14 +4,12 @@ from rank_bm25 import BM25Okapi
 from sentence_transformers import CrossEncoder
 import os
 from dotenv import load_dotenv
+from ..paths import PROJECT_ROOT
 
-load_dotenv(dotenv_path="../.env", override=True)
+load_dotenv(PROJECT_ROOT / ".env", override=True)
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")
-os.environ["CHROMADB_API_KEY"] = chromadb_api_key
 tenant_key = os.getenv("CHROMADB_TENANT")
-os.environ["CHROMADB_TENANT"] = tenant_key
 database_key = os.getenv("CHROMADB_DATABASE")
-os.environ["CHROMADB_DATABASE"] = database_key
 
 
 class ExistingChromaHybridRetriever:
@@ -90,13 +88,25 @@ class ExistingChromaHybridRetriever:
         scored_docs.sort(key=lambda x: x["score"], reverse=True)
         return scored_docs[:final_top_n]
 
-# 1. Connect to existing ChromaDB collection
-client = chromadb.CloudClient(
-    api_key=chromadb_api_key,
-    tenant=tenant_key,
-    database=database_key
-)
-my_collection = client.get_collection(name="ChurnDesk")
+_retriever: ExistingChromaHybridRetriever | None = None
 
-# 2. Pass existing collection to the retriever
-retriever = ExistingChromaHybridRetriever(chroma_collection=my_collection)
+
+def get_retriever() -> ExistingChromaHybridRetriever:
+    global _retriever
+
+    if _retriever is not None:
+        return _retriever
+
+    if not chromadb_api_key or not tenant_key or not database_key:
+        raise RuntimeError(
+            "ChromaDB environment variables are not configured."
+        )
+
+    client = chromadb.CloudClient(
+        api_key=chromadb_api_key,
+        tenant=tenant_key,
+        database=database_key,
+    )
+    my_collection = client.get_collection(name="ChurnDesk")
+    _retriever = ExistingChromaHybridRetriever(chroma_collection=my_collection)
+    return _retriever

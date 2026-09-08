@@ -1,12 +1,12 @@
 from ..state import GraphState, RagState
-from ...rag.retrieval import retriever
+from ...rag.retrieval import get_retriever
 
 def perform_rag(state: GraphState) -> dict:
     # 1. Fetch query directly from state
     llama_query = state.search_query
     
     # 2. Query retriever
-    results = retriever.retrieve(query=llama_query, final_top_n=4)
+    results = get_retriever().retrieve(query=llama_query, final_top_n=4)
     
     documents_list = [
         RagState(

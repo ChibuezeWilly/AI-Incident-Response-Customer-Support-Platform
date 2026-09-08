@@ -38,8 +38,9 @@ from dotenv import load_dotenv
 import json
 from datetime import datetime, timedelta, timezone  
 from arq.connections import ArqRedis
+from ...paths import PROJECT_ROOT
 
-load_dotenv(dotenv_path="../env", override=True)
+load_dotenv(PROJECT_ROOT / ".env", override=True)
 
 HUGGIN_FACE_TOKEN = os.getenv("HF_TOKEN")
 
@@ -64,6 +65,13 @@ def _serialize_admin_ticket(ticket: models.Tickets) -> dict[str, Any]:
             "account_tier": ticket.owner.account_tier,
         }
 
+    telemetry_data = getattr(ticket, "telemetry_data", None)
+    semantic_cache = (
+        telemetry_data.get("semantic_cache")
+        if isinstance(telemetry_data, dict)
+        else None
+    )
+
     return {
         "ticket_id": ticket.id,
         "id": ticket.id,
@@ -76,44 +84,39 @@ def _serialize_admin_ticket(ticket: models.Tickets) -> dict[str, Any]:
         "department": ticket.department,
         "confidence": ticket.confidence,
         "priority": ticket.priority,
-        "failure_reason": ticket.ticket_check_message,
-        "retrieved_docs": ticket.retrieved_docs or [],
-        "retries": ticket.retries,
-        "eval_confidence": ticket.eval_confidence,
-        "has_hallucinations": ticket.has_hallucinations,
-        "grounding_source_ids": ticket.grounding_source_ids or [],
-        "eval_feedback": ticket.eval_feedback,
-        "tags": ticket.tags or [],
-        "extracted_keywords": ticket.extracted_keywords or [],
-        "telemetry_data": ticket.telemetry_data,
+        "failure_reason": getattr(ticket, "ticket_check_message", None),
+        "retrieved_docs": getattr(ticket, "retrieved_docs", []) or [],
+        "retries": getattr(ticket, "retries", 0),
+        "eval_confidence": getattr(ticket, "eval_confidence", None),
+        "has_hallucinations": getattr(ticket, "has_hallucinations", False),
+        "grounding_source_ids": getattr(ticket, "grounding_source_ids", []) or [],
+        "eval_feedback": getattr(ticket, "eval_feedback", None),
+        "tags": getattr(ticket, "tags", []) or [],
+        "extracted_keywords": getattr(ticket, "extracted_keywords", []) or [],
+        "telemetry_data": telemetry_data,
         "jira_escalation": (
-            ticket.telemetry_data.get("jira_escalation")
-            if isinstance(ticket.telemetry_data, dict)
+            telemetry_data.get("jira_escalation")
+            if isinstance(telemetry_data, dict)
             else None
         ),
-        "ai_draft": ticket.ai_draft,
-        "human_decision": ticket.human_decision,
-        "human_edited_text": ticket.human_edited_text,
-        "created_at": ticket.created_at,
-        "updated_at": ticket.updated_at,
-        "initial_latency": ticket.initial_latency,
-        "total_latency": ticket.total_latency,
-        "latency": ticket.latency,
-        "final_response_text": ticket.final_response_text,
-        "resolved_by": ticket.resolved_by,
-        "troubleshooting_steps": ticket.troubleshooting_steps or [],
-        "solution": ticket.solution,
-        "root_cause": ticket.root_cause,
+        "ai_draft": getattr(ticket, "ai_draft", None),
+        "human_decision": getattr(ticket, "human_decision", None),
+        "human_edited_text": getattr(ticket, "human_edited_text", None),
+        "created_at": getattr(ticket, "created_at", None),
+        "updated_at": getattr(ticket, "updated_at", None),
+        "initial_latency": getattr(ticket, "initial_latency", None),
+        "total_latency": getattr(ticket, "total_latency", None),
+        "latency": getattr(ticket, "latency", None),
+        "final_response_text": getattr(ticket, "final_response_text", None),
+        "resolved_by": getattr(ticket, "resolved_by", None),
+        "troubleshooting_steps": getattr(ticket, "troubleshooting_steps", []) or [],
+        "solution": getattr(ticket, "solution", None),
+        "root_cause": getattr(ticket, "root_cause", None),
         "user": user_details,
-        "semantic_cache": (
-            ticket.telemetry_data.get("semantic_cache")
-            if isinstance(ticket.telemetry_data, dict)
-            else None
-        ),
+        "semantic_cache": semantic_cache,
         "cache_hit": (
-            bool(ticket.telemetry_data.get("semantic_cache", {}).get("cache_hit"))
-            if isinstance(ticket.telemetry_data, dict)
-            and isinstance(ticket.telemetry_data.get("semantic_cache"), dict)
+            bool(semantic_cache.get("cache_hit"))
+            if isinstance(semantic_cache, dict)
             else False
         ),
     }

@@ -7,13 +7,25 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from fastapi import status, HTTPException
 from ...agents.graph import get_graph
+from ...paths import PROJECT_ROOT
 
-load_dotenv(dotenv_path="../.env", override=True)
+load_dotenv(PROJECT_ROOT / ".env", override=True)
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")
 tenant_key = os.getenv("CHROMADB_TENANT")
 database_key = os.getenv("CHROMADB_DATABASE")
 
-embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+_embedding_model: SentenceTransformer | None = None
+
+
+def _get_embedding_model() -> SentenceTransformer:
+    global _embedding_model
+
+    if _embedding_model is None:
+        _embedding_model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return _embedding_model
 
 
 class ChromaTicketSaver:
@@ -61,13 +73,17 @@ class ChromaTicketSaver:
             self.documents_list.append(record)
 
         looped_strings = [document.page_content for document in chunked_documents]
-        embedded_vectors = embedding_model.encode(
+        embedded_vectors = _get_embedding_model().encode(
             looped_strings, show_progress_bar=False
         )
 
         return [vector.tolist() for vector in embedded_vectors]
 
     def store_vectors(self):
+        if not chromadb_api_key or not tenant_key or not database_key:
+            raise RuntimeError(
+                "ChromaDB environment variables are not configured."
+            )
 
         client = chromadb.CloudClient(
             api_key=chromadb_api_key, tenant=tenant_key, database=database_key
