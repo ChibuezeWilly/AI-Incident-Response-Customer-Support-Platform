@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import asyncio
 import os
 from pathlib import Path
 import shlex
@@ -78,6 +79,7 @@ async def lifespan(app: FastAPI):
     pool = None
     arq_redis = None
     checkpointer_context = None
+    database_startup_task = None
     app.state.arq_redis = None
     app.state.arq_worker_process = None
 
@@ -102,41 +104,48 @@ async def lifespan(app: FastAPI):
         pool = None
         arq_redis = None
 
-    try:
-        sanitized_db_url = resolve_postgres_url(settings.DATABASE_URL).replace(
-            "postgresql+psycopg://",
-            "postgresql://",
-        )
-
-        if sanitized_db_url.startswith("postgresql"):
-            checkpointer_context = AsyncPostgresSaver.from_conn_string(
-                sanitized_db_url,
-                serde=JsonPlusSerializer(
-                    allowed_msgpack_modules=[
-                        ("app.agents.state", "EvaluationResult"),
-                        ("app.agents.state", "AIDraftResolution"),
-                    ]
-                ),
+    async def initialize_database_services():
+        nonlocal checkpointer_context
+        try:
+            sanitized_db_url = resolve_postgres_url(settings.DATABASE_URL).replace(
+                "postgresql+psycopg://",
+                "postgresql://",
             )
-            checkpointer = await checkpointer_context.__aenter__()
-            await checkpointer.setup()
 
-            initialize_graph(checkpointer)
+            if sanitized_db_url.startswith("postgresql"):
+                checkpointer_context = AsyncPostgresSaver.from_conn_string(
+                    sanitized_db_url,
+                    serde=JsonPlusSerializer(
+                        allowed_msgpack_modules=[
+                            ("app.agents.state", "EvaluationResult"),
+                            ("app.agents.state", "AIDraftResolution"),
+                        ]
+                    ),
+                )
+                checkpointer = await checkpointer_context.__aenter__()
+                await checkpointer.setup()
+                initialize_graph(checkpointer)
 
-            scheduler.add_job(
-                node_drift_alert,
-                trigger=IntervalTrigger(days=7),
-                id="daily_drift_check",
-                replace_existing=True,
-            )
-            scheduler.start()
-    except Exception:
-        checkpointer_context = None
+                scheduler.add_job(
+                    node_drift_alert,
+                    trigger=IntervalTrigger(days=7),
+                    id="daily_drift_check",
+                    replace_existing=True,
+                )
+                scheduler.start()
+        except Exception:
+            checkpointer_context = None
+
+    # Do not block Render's port detection on a database or Redis dependency.
+    database_startup_task = asyncio.create_task(initialize_database_services())
 
     try:
         # Yield control back to FastAPI to process incoming HTTP requests
         yield
     finally:
+        if database_startup_task is not None and not database_startup_task.done():
+            database_startup_task.cancel()
+            await asyncio.gather(database_startup_task, return_exceptions=True)
         if scheduler.running:
             scheduler.shutdown(wait=False)
         if checkpointer_context is not None:

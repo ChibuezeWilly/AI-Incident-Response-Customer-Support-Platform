@@ -61,7 +61,7 @@ def resolve_redis_url(raw_url: str) -> str:
 
 
 def resolve_postgres_url(raw_url: str) -> str:
-    """Use localhost when a Docker Postgres hostname is configured outside Docker."""
+    """Normalize PostgreSQL URLs for Psycopg 3 and local Docker runs."""
     parsed = urlparse(raw_url)
     if parsed.hostname in {"postgres", "db", "postgresql"} and not os.path.exists(
         "/.dockerenv"
@@ -74,6 +74,9 @@ def resolve_postgres_url(raw_url: str) -> str:
             if parsed.password:
                 auth = f"{auth}:{parsed.password}"
             netloc = f"{auth}@{netloc}"
-        return urlunparse(parsed._replace(netloc=netloc))
+        parsed = parsed._replace(netloc=netloc)
 
-    return raw_url
+    if parsed.scheme in {"postgresql", "postgresql+psycopg2"}:
+        parsed = parsed._replace(scheme="postgresql+psycopg")
+
+    return urlunparse(parsed)
