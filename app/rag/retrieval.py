@@ -1,7 +1,6 @@
 import numpy as np
 import chromadb
 from rank_bm25 import BM25Okapi
-from sentence_transformers import CrossEncoder
 import os
 from dotenv import load_dotenv
 from ..paths import PROJECT_ROOT
@@ -39,6 +38,8 @@ class ExistingChromaHybridRetriever:
         self.bm25 = BM25Okapi(tokenized_corpus)
 
         # 3. Load Cross-Encoder Reranker
+        from sentence_transformers import CrossEncoder
+
         self.reranker = CrossEncoder(reranker_model_name)
        
 

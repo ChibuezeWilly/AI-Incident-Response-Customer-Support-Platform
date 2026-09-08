@@ -1,8 +1,8 @@
 import os
 import uuid
+from typing import Any
 import chromadb
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from ...paths import PROJECT_ROOT
 
@@ -13,13 +13,15 @@ CHROMADB_TENANT = os.getenv("CHROMADB_TENANT")
 CHROMADB_DATABASE = os.getenv("CHROMADB_DATABASE")
 
 
-_embedding_model: SentenceTransformer | None = None
+_embedding_model: Any | None = None
 
 
-def _get_embedding_model() -> SentenceTransformer:
+def _get_embedding_model() -> Any:
     global _embedding_model
 
     if _embedding_model is None:
+        from sentence_transformers import SentenceTransformer
+
         _embedding_model = SentenceTransformer(
             "sentence-transformers/all-MiniLM-L6-v2"
         )

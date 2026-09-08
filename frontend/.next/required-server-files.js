@@ -323,7 +323,7 @@ self.__SERVER_FILES_MANIFEST={
     "turbopack": {
       "root": "C:\\Users\\hp\\Incident response system\\frontend"
     },
-    "repoRoot": "C:\\Users\\hp\\Incident response system",
+    "repoRoot": "C:\\Users\\hp\\Incident response system\\frontend",
     "distDirRoot": ".next"
   },
   "appDir": "C:\\Users\\hp\\Incident response system\\frontend",

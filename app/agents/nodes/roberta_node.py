@@ -1,12 +1,6 @@
 from pathlib import Path
 from typing import Any
 
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-    pipeline,
-)
-
 from ...model.schemas.schema import DistilbertOutput
 from ...services.telemetry import telemetry_client
 from ..state import GraphState
@@ -53,6 +47,8 @@ def _load_classifier():
 
     if ticket_router is not None:
         return ticket_router
+
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
     model_weights = [
         MODEL_DIR / "model.safetensors",

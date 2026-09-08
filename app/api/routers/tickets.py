@@ -18,8 +18,6 @@ from sqlalchemy.orm import Session, joinedload
 from ...database.postgres import models
 from ...services.oauth2 import get_current_user
 
-from presidio_analyzer import AnalyzerEngine
-from presidio_anonymizer import AnonymizerEngine
 from ...cache import (
     get_global_semantic_cache,
 )
@@ -27,12 +25,24 @@ from ..background_tasks.ticket_payloads import build_initial_graph_state
 
 from arq.connections import ArqRedis
 
-analyzer = AnalyzerEngine()
-anonymizer = AnonymizerEngine()
+analyzer = None
+anonymizer = None
+
+
+def _get_pii_tools():
+    global analyzer, anonymizer
+    if analyzer is None or anonymizer is None:
+        from presidio_analyzer import AnalyzerEngine
+        from presidio_anonymizer import AnonymizerEngine
+
+        analyzer = AnalyzerEngine()
+        anonymizer = AnonymizerEngine()
+    return analyzer, anonymizer
 
 
 def sanitize_ticket_body(raw_body: str) -> str:
-    results = analyzer.analyze(
+    analyzer_engine, anonymizer_engine = _get_pii_tools()
+    results = analyzer_engine.analyze(
         text=raw_body,
         entities=[
             "PHONE_NUMBER",
@@ -45,7 +55,7 @@ def sanitize_ticket_body(raw_body: str) -> str:
         ],
         language="en",
     )
-    sanitized = anonymizer.anonymize(text=raw_body, analyzer_results=results)
+    sanitized = anonymizer_engine.anonymize(text=raw_body, analyzer_results=results)
     return sanitized.text
 
 
