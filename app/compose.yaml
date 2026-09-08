@@ -10,6 +10,7 @@ services:
     volumes:
       - .:/app/app
     environment:
+      PORT: 8000
       REDIS_URL: redis://redis:6379/0
     depends_on:
       - redis
