@@ -7,7 +7,7 @@ from huggingface_hub import InferenceClient
 from agents.state import EvaluationResult, GraphState
 
 
-client = InferenceClient(provider="novita", api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="featherless-ai", api_key=os.getenv("HF_TOKEN"))
 
 parser = PydanticOutputParser(
     pydantic_object=EvaluationResult
