@@ -1,5 +1,6 @@
 import json
 import os
+import asyncio
 from typing import Any
 
 from model.schemas.schema import DistilbertOutput
@@ -21,6 +22,8 @@ encoder_classes = [
 ]
 
 CLASSIFIER_MODEL = "facebook/bart-large-mnli"
+CLASSIFIER_TIMEOUT_SECONDS = float(os.getenv("HF_CLASSIFIER_TIMEOUT_SECONDS", "30"))
+CLASSIFIER_RETRIES = max(0, int(os.getenv("HF_CLASSIFIER_RETRIES", "2")))
 model = CLASSIFIER_MODEL
 
 
@@ -30,7 +33,23 @@ def _classify_ticket(text: str) -> tuple[str, float]:
         candidate_labels=encoder_classes,
         model=CLASSIFIER_MODEL,
     )
-    best = max(zip(result.labels, result.scores), key=lambda item: item[1])
+    if hasattr(result, "labels") and hasattr(result, "scores"):
+        labels = result.labels
+        scores = result.scores
+    elif isinstance(result, dict) and "labels" in result:
+        labels = result["labels"]
+        scores = result["scores"]
+    elif isinstance(result, list):
+        if result and isinstance(result[0], dict) and "labels" in result[0]:
+            labels = result[0]["labels"]
+            scores = result[0]["scores"]
+        else:
+            labels = [item["label"] for item in result]
+            scores = [item["score"] for item in result]
+    else:
+        raise TypeError(f"Unexpected zero-shot response type: {type(result)!r}")
+
+    best = max(zip(labels, scores), key=lambda item: item[1])
     return str(best[0]), float(best[1])
 
 
@@ -52,7 +71,20 @@ async def run_local_classifier(
     else:
         full_ticket_text = f"Subject: {subject}\n" f"Body: {body}"
 
-    transformed_label, confidence = _classify_ticket(full_ticket_text)
+    last_error: Exception | None = None
+    for attempt in range(CLASSIFIER_RETRIES + 1):
+        try:
+            transformed_label, confidence = await asyncio.wait_for(
+                asyncio.to_thread(_classify_ticket, full_ticket_text),
+                timeout=CLASSIFIER_TIMEOUT_SECONDS,
+            )
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt < CLASSIFIER_RETRIES:
+                await asyncio.sleep(2**attempt)
+    else:
+        raise RuntimeError("Hugging Face ticket classification failed.") from last_error
 
     telemetry_data = None
 

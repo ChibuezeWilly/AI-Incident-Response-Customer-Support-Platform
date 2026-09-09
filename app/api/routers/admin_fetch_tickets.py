@@ -45,16 +45,27 @@ load_dotenv(PROJECT_ROOT / ".env", override=True)
 HUGGIN_FACE_TOKEN = os.getenv("HF_TOKEN")
 
 hf_client = InferenceClient(
-    provider="hf-inference",
+    provider="featherless-ai",
     api_key=HUGGIN_FACE_TOKEN,
 )
-MODEL_ID = "meta-llama/Llama-3.1-8B-Instruct:novita"
+MODEL_ID = "meta-llama/Llama-3.1-8B-Instruct"
 
 router = APIRouter(prefix="/admin/tickets", tags=["Admin Tickets"])
 
 
-def get_arq_redis(request: Request) -> ArqRedis:
-    return request.app.state.arq_redis
+async def get_arq_redis(request: Request) -> ArqRedis:
+    startup_task = getattr(request.app.state, "redis_startup_task", None)
+    if startup_task is not None and not startup_task.done():
+        await startup_task
+
+    arq_redis = getattr(request.app.state, "arq_redis", None)
+    if arq_redis is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Redis job queue is unavailable. Retry after the backend reconnects.",
+        )
+
+    return arq_redis
 
 
 def _serialize_admin_ticket(ticket: models.Tickets) -> dict[str, Any]:
@@ -1252,7 +1263,9 @@ async def approve_pending_ticket(
         if payload.decision == "REJECT_AND_ESCALATE":
             ticket.human_decision = payload.decision
             ticket.human_edited_text = None
-            ticket.status = "ESCALATED"
+            # Jira creation runs after this response.  Do not report a completed
+            # escalation until Jira has accepted the issue creation request.
+            ticket.status = "ESCALATION_PENDING"
             db.commit()
             db.refresh(ticket)
 
@@ -1262,7 +1275,7 @@ async def approve_pending_ticket(
             )
 
             return {
-                "status": "ESCALATED",
+                "status": "ESCALATION_PENDING",
                 "thread_id": thread_id,
                 "decision": payload.decision,
                 "department": payload.department,
@@ -1312,7 +1325,7 @@ async def approve_pending_ticket(
         background_tasks.add_task(save_ticket_info, graph_thread_id)
 
         return {
-            "status": "ESCALATED",
+            "status": "ESCALATION_PENDING",
             "thread_id": thread_id,
             "decision": payload.decision,
             "department": payload.department,

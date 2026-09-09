@@ -27,6 +27,7 @@ const statusMap = {
   "AWAITING HUMAN REVIEW": "AWAITING HUMAN REVIEW",
   PROCESSED: "PROCESSED",
   RESOLVED: "RESOLVED",
+  ESCALATION_PENDING: "ESCALATION_PENDING",
   ESCALATED: "ESCALATED",
   FAILED: "FAILED",
 };
@@ -526,7 +527,7 @@ export async function rejectTicket(id, threadId) {
     method: "POST",
     body: { decision: "REJECT_AND_ESCALATE" },
   });
-  return mapTicket({ ...result, id, status: "ESCALATED" });
+  return mapTicket({ ...result, id, status: "ESCALATION_PENDING" });
 }
 export async function deleteTicket(id) {
   const result = await apiRequest(ENDPOINTS.adminTickets.delete(id), {

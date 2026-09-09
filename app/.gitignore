@@ -39,7 +39,7 @@ mlruns/
 *.pth
 *.ckpt
 
-.vscode/
+.vscode/*
 .idea/
 
 .DS_Store

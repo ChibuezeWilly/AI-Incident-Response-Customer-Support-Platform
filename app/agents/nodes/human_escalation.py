@@ -9,7 +9,7 @@ from api.background_tasks.save_initial_ticket import save_human_review
 from database.postgres.database import get_db_ctx
 from database.postgres import models
 
-client = InferenceClient(provider="hf-inference", api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="featherless-ai", api_key=os.getenv("HF_TOKEN"))
 
 
 def build_generator_prompt(
@@ -92,7 +92,7 @@ async def node_human_review_generator(
         )
 
         completion = client.chat.completions.create(
-            model="meta-llama/Llama-3.1-8B-Instruct:novita",
+            model="meta-llama/Llama-3.3-70B-Instruct",
             messages=[
                 {
                     "role": "system",
@@ -331,7 +331,7 @@ async def node_human_review_generator(
         )
 
         ticket.status = (
-            "ESCALATED"
+            "ESCALATION_PENDING"
             if decision == "REJECT_AND_ESCALATE"
             else "RESOLVED"
         )
@@ -343,7 +343,7 @@ async def node_human_review_generator(
         "human_decision": decision,
         "final_response_text": final_response_text,
         "status": (
-            "ESCALATED"
+            "ESCALATION_PENDING"
             if decision == "REJECT_AND_ESCALATE"
             else "RESOLVED"
         ),

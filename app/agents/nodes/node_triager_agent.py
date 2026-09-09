@@ -7,7 +7,7 @@ from huggingface_hub import InferenceClient
 from model.schemas.schema import LlamaOutput
 from agents.state import GraphState
 
-client = InferenceClient(provider="hf-inference", api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="novita", api_key=os.getenv("HF_TOKEN"))
 
 def extract_json_object(response_text: str) -> str:
     """
@@ -310,9 +310,9 @@ async def node_triager(state: GraphState) -> dict:
     )
 
     model = (
-        "meta-llama/Llama-3.1-70B-Instruct:featherless-ai"
-        if state.retries == 2
-        else "meta-llama/Llama-3.1-8B-Instruct:novita"
+        "meta-llama/Llama-3.3-70B-Instruct"
+        if state.retries == 1
+        else "meta-llama/Llama-3.1-8B-Instruct"
     )
 
     system_prompt = build_triage_context(state)

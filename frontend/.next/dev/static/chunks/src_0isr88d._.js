@@ -1072,11 +1072,17 @@ async function apiRequest(path, options = {}) {
     if (token) {
         headers.set('Authorization', `Bearer ${token}`);
     }
-    const response = await fetch(`${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["API_BASE_URL"]}${path}`, {
-        ...rest,
-        headers,
-        body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body)
-    });
+    let response;
+    try {
+        response = await fetch(`${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["API_BASE_URL"]}${path}`, {
+            ...rest,
+            headers,
+            body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body)
+        });
+    } catch (error) {
+        const reason = error instanceof Error ? `: ${error.message}` : '';
+        throw new ApiError(`Unable to reach the API at ${__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$config$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["API_BASE_URL"]}${reason}`, 0, error);
+    }
     if (!response.ok) {
         if (response.status === 401 && token && ("TURBOPACK compile-time value", "object") !== 'undefined') {
             window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED_EVENT));
@@ -1303,6 +1309,7 @@ const statusMap = {
     "AWAITING HUMAN REVIEW": "AWAITING HUMAN REVIEW",
     PROCESSED: "PROCESSED",
     RESOLVED: "RESOLVED",
+    ESCALATION_PENDING: "ESCALATION_PENDING",
     ESCALATED: "ESCALATED",
     FAILED: "FAILED"
 };
@@ -1578,7 +1585,7 @@ async function rejectTicket(id, threadId) {
     return mapTicket({
         ...result,
         id,
-        status: "ESCALATED"
+        status: "ESCALATION_PENDING"
     });
 }
 async function deleteTicket(id) {
@@ -3633,6 +3640,7 @@ function HITLWorkspace({ ticket: rawTicket, onBack, onApprove, onReject, onDelet
     const [editModalText, setEditModalText] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
     const [actionBusy, setActionBusy] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [successMessage, setSuccessMessage] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
+    const [actionError, setActionError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
     const customerName = ticket.user?.business_name || ticket.user?.name || (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$customer$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["getCustomerNameFromEmail"])(ticket.userEmail);
     const isDark = theme === "dark";
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
@@ -3685,6 +3693,7 @@ function HITLWorkspace({ ticket: rawTicket, onBack, onApprove, onReject, onDelet
     const confirmApprove = async ()=>{
         if (actionBusy) return;
         setActionBusy(true);
+        setActionError("");
         setApproveModalOpen(false);
         try {
             await onApprove(ticket.id, selectedDept, editedSolution || ticket.aiRagSolution);
@@ -3728,6 +3737,7 @@ function HITLWorkspace({ ticket: rawTicket, onBack, onApprove, onReject, onDelet
             setSuccessModalOpen(true);
         }).catch((error)=>{
             console.error("Failed to send edited response:", error);
+            setActionError(error?.body?.detail || error?.message || "Failed to send the edited response.");
         }).finally(()=>{
             setActionBusy(false);
         });
@@ -3738,12 +3748,14 @@ function HITLWorkspace({ ticket: rawTicket, onBack, onApprove, onReject, onDelet
     const confirmEscalate = ()=>{
         if (actionBusy) return;
         setActionBusy(true);
+        setActionError("");
         setEscalatingJira(false);
         Promise.resolve(onReject(ticket.id)).then(()=>{
-            setSuccessMessage("Ticket escalated successfully.");
+            setSuccessMessage("Jira escalation queued. The ticket will show Escalated after Jira creates the issue.");
             setSuccessModalOpen(true);
         }).catch((error)=>{
             console.error("Failed to escalate ticket:", error);
+            setActionError(error?.body?.detail || error?.message || "Failed to escalate the ticket.");
         }).finally(()=>{
             setActionBusy(false);
         });
@@ -4824,6 +4836,11 @@ function HITLWorkspace({ ticket: rawTicket, onBack, onApprove, onReject, onDelet
                             (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxs"])("div", {
                                 className: "flex gap-2.5",
                                 children: [
+                                    actionError && (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])("p", {
+                                        className: "basis-full text-xs text-red-400",
+                                        role: "alert",
+                                        children: actionError
+                                    }),
                                     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxs"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
                                         children: [
                                             (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])("button", {
@@ -5187,7 +5204,7 @@ function HITLWorkspace({ ticket: rawTicket, onBack, onApprove, onReject, onDelet
         ]
     });
 }
-_s(HITLWorkspace, "4nxC0p8y1CpoVNoCr+qaB4bwjDo=");
+_s(HITLWorkspace, "yAT+1PdAZJPrLH0X08hwUXiCDhc=");
 _c = HITLWorkspace;
 var _c;
 __turbopack_context__.k.register(_c, "HITLWorkspace");
@@ -6674,6 +6691,7 @@ function TicketsManager({ tickets = [], onSelectTicket, theme = "dark", onOpenCu
     const [minConfidence, setMinConfidence] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
     const [processedTickets, setProcessedTickets] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [retryingTicketId, setRetryingTicketId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [retryError, setRetryError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])("");
     const [expandedTicketId, setExpandedTicketId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [editingDrafts, setEditingDrafts] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({});
     const [editedDepartments, setEditedDepartments] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({});
@@ -6709,11 +6727,13 @@ function TicketsManager({ tickets = [], onSelectTicket, theme = "dark", onOpenCu
         const ticketId = ticket?.id || ticket?.ticket_id;
         if (!ticketId) return;
         setRetryingTicketId(ticketId);
+        setRetryError("");
         try {
             await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$locals$3e$__["retryFailedTicket"])(ticketId);
             await onRefreshTickets?.();
         } catch (err) {
             console.error(`Failed to retry ticket #${ticketId}:`, err);
+            setRetryError(err?.body?.detail || err?.message || `Failed to retry ticket #${ticketId}.`);
         } finally{
             setRetryingTicketId((current)=>current === ticketId ? null : current);
         }
@@ -7167,6 +7187,10 @@ function TicketsManager({ tickets = [], onSelectTicket, theme = "dark", onOpenCu
                                                                     },
                                                                     className: `text-sm font-medium hover:underline block ${isDark ? "text-zinc-300 hover:text-white" : "text-slate-700 hover:text-slate-900"}`,
                                                                     children: email
+                                                                }),
+                                                                retryError && retryingTicketId === null && (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])("span", {
+                                                                    className: "text-[10px] text-red-300 max-w-56 whitespace-normal",
+                                                                    children: retryError
                                                                 }),
                                                                 (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxs"])("span", {
                                                                     className: `text-[11px] font-bold ${tier === "VIP" ? "text-rose-500" : tier === "Enterprise" ? "text-amber-500" : "text-slate-500 dark:text-zinc-400"}`,
@@ -7684,7 +7708,7 @@ function TicketsManager({ tickets = [], onSelectTicket, theme = "dark", onOpenCu
         ]
     });
 }
-_s(TicketsManager, "k1CsXJGdM4s2oSDr03peZq4G4qU=");
+_s(TicketsManager, "VqLTST/qvKkkcjnZ6X2J/ytHupI=");
 _c = TicketsManager;
 var _c;
 __turbopack_context__.k.register(_c, "TicketsManager");
@@ -9004,6 +9028,17 @@ function StatusBadge({ status, size = 'sm' }) {
                         "aria-hidden": true
                     }),
                     "Escalated"
+                ]
+            });
+        case 'ESCALATION_PENDING':
+            return (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxs"])("span", {
+                className: `inline-flex items-center gap-1.5 rounded-full font-bold border ${sizeClass} bg-amber-500/10 text-amber-500 dark:text-amber-400 border-amber-500/20`,
+                children: [
+                    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsx"])("span", {
+                        className: "w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse",
+                        "aria-hidden": true
+                    }),
+                    "Jira Syncing"
                 ]
             });
         default:

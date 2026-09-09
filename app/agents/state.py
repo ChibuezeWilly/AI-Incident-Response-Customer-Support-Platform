@@ -1,7 +1,19 @@
 from datetime import datetime
 from typing import Any
 
+import sys
+import types
+
 from pydantic import BaseModel, Field
+
+
+# Keep checkpoints written by the previous ``app.agents.state`` layout readable.
+_legacy_app = sys.modules.setdefault("app", types.ModuleType("app"))
+_legacy_app.__path__ = []
+_legacy_agents = sys.modules[__package__]
+setattr(_legacy_app, "agents", _legacy_agents)
+sys.modules.setdefault("app.agents", _legacy_agents)
+sys.modules.setdefault("app.agents.state", sys.modules[__name__])
 
 
 class RagState(BaseModel):

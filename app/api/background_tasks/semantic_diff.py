@@ -12,7 +12,7 @@ from database.postgres.database import get_db
 from model.schemas.schema import SemanticDiff
 
 
-client = InferenceClient(provider="hf-inference", api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="featherless-ai", api_key=os.getenv("HF_TOKEN"))
 
 parser = PydanticOutputParser(pydantic_object=SemanticDiff)
 
@@ -90,7 +90,7 @@ async def node_semantic_diff(thread_id: str) -> dict:
     graph_state = GraphState(**state)
 
     completion = client.chat.completions.create(
-        model="meta-llama/Llama-3.1-8B-Instruct:novita",
+        model="meta-llama/Llama-3.1-8B-Instruct",
         messages=[
             {
                 "role": "system",

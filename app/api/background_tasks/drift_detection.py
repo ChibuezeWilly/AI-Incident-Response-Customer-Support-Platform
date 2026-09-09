@@ -11,7 +11,7 @@ from database.postgres import models
 from database.postgres.database import get_db
 from model.schemas.schema import AllDrift, Drift, DriftAlert
 
-client = InferenceClient(provider="hf-inference", api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="featherless-ai", api_key=os.getenv("HF_TOKEN"))
 
 
 def build_drift_prompt(
@@ -185,7 +185,7 @@ async def node_drift_alert() -> DriftAlert | None:
         )
 
         completion = client.chat.completions.create(
-            model="meta-llama/Llama-3.1-8B-Instruct:novita",
+            model="meta-llama/Llama-3.1-8B-Instruct",
             messages=[
                 {
                     "role": "system",

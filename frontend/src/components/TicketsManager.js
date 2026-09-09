@@ -63,6 +63,7 @@ export default function TicketsManager({
   const [minConfidence, setMinConfidence] = useState(0);
   const [processedTickets, setProcessedTickets] = useState(null);
   const [retryingTicketId, setRetryingTicketId] = useState(null);
+  const [retryError, setRetryError] = useState("");
 
   const [expandedTicketId, setExpandedTicketId] = useState(null);
   const [editingDrafts, setEditingDrafts] = useState({});
@@ -97,11 +98,15 @@ export default function TicketsManager({
     if (!ticketId) return;
 
     setRetryingTicketId(ticketId);
+    setRetryError("");
     try {
       await retryFailedTicket(ticketId);
       await onRefreshTickets?.();
     } catch (err) {
       console.error(`Failed to retry ticket #${ticketId}:`, err);
+      setRetryError(
+        err?.body?.detail || err?.message || `Failed to retry ticket #${ticketId}.`,
+      );
     } finally {
       setRetryingTicketId((current) => (current === ticketId ? null : current));
     }
@@ -628,6 +633,12 @@ export default function TicketsManager({
                                           }`,
                                         children: email,
                                       }),
+                                      retryError &&
+                                        retryingTicketId === null &&
+                                        _jsx("span", {
+                                          className: "text-[10px] text-red-300 max-w-56 whitespace-normal",
+                                          children: retryError,
+                                        }),
                                       _jsxs("span", {
                                         className: `text-[11px] font-bold ${tier === "VIP"
                                           ? "text-rose-500"

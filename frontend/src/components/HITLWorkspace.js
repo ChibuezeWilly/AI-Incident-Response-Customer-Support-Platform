@@ -68,6 +68,7 @@ export default function HITLWorkspace({
   const [editModalText, setEditModalText] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const customerName =
     ticket.user?.business_name ||
@@ -132,6 +133,7 @@ export default function HITLWorkspace({
     if (actionBusy) return;
 
     setActionBusy(true);
+    setActionError("");
     setApproveModalOpen(false);
 
     try {
@@ -192,6 +194,9 @@ export default function HITLWorkspace({
       })
       .catch((error) => {
         console.error("Failed to send edited response:", error);
+        setActionError(
+          error?.body?.detail || error?.message || "Failed to send the edited response.",
+        );
       })
       .finally(() => {
         setActionBusy(false);
@@ -206,15 +211,19 @@ export default function HITLWorkspace({
     if (actionBusy) return;
 
     setActionBusy(true);
+    setActionError("");
     setEscalatingJira(false);
 
     Promise.resolve(onReject(ticket.id))
       .then(() => {
-        setSuccessMessage("Ticket escalated successfully.");
+        setSuccessMessage("Jira escalation queued. The ticket will show Escalated after Jira creates the issue.");
         setSuccessModalOpen(true);
       })
       .catch((error) => {
         console.error("Failed to escalate ticket:", error);
+        setActionError(
+          error?.body?.detail || error?.message || "Failed to escalate the ticket.",
+        );
       })
       .finally(() => {
         setActionBusy(false);
@@ -1950,6 +1959,12 @@ export default function HITLWorkspace({
               _jsxs("div", {
                 className: "flex gap-2.5",
                 children: [
+                  actionError &&
+                    _jsx("p", {
+                      className: "basis-full text-xs text-red-400",
+                      role: "alert",
+                      children: actionError,
+                    }),
                   _jsxs(_Fragment, {
                         children: [
                           _jsx("button", {

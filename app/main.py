@@ -108,6 +108,7 @@ async def lifespan(app: FastAPI):
             arq_redis = None
 
     redis_startup_task = asyncio.create_task(initialize_redis_services())
+    app.state.redis_startup_task = redis_startup_task
 
     async def initialize_database_services():
         nonlocal checkpointer_context
@@ -124,8 +125,20 @@ async def lifespan(app: FastAPI):
                     sanitized_db_url,
                     serde=JsonPlusSerializer(
                         allowed_msgpack_modules=[
+                            ("agents.state", "RagState"),
                             ("agents.state", "EvaluationResult"),
                             ("agents.state", "AIDraftResolution"),
+                            ("agents.state", "HumanReviewPayload"),
+                            ("agents.state", "GraphState"),
+                            ("agents.state", "ApprovalDecision"),
+                            ("agents.state", "UserTicketResponse"),
+                            ("app.agents.state", "RagState"),
+                            ("app.agents.state", "EvaluationResult"),
+                            ("app.agents.state", "AIDraftResolution"),
+                            ("app.agents.state", "HumanReviewPayload"),
+                            ("app.agents.state", "GraphState"),
+                            ("app.agents.state", "ApprovalDecision"),
+                            ("app.agents.state", "UserTicketResponse"),
                         ]
                     ),
                 )
@@ -178,6 +191,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+@app.get("/")
+def health_check():
+    return {"status": "ok"}
+
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
@@ -188,6 +206,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
+    allow_origin_regex=r"https://[a-z0-9-]+\.vercel\.app|https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

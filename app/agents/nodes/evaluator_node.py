@@ -7,7 +7,7 @@ from huggingface_hub import InferenceClient
 from agents.state import EvaluationResult, GraphState
 
 
-client = InferenceClient(provider="hf-inference", api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="novita", api_key=os.getenv("HF_TOKEN"))
 
 parser = PydanticOutputParser(
     pydantic_object=EvaluationResult
@@ -62,7 +62,7 @@ def evaluate_retrieved_docs(state: GraphState) -> dict:
     system_prompt += build_context(state)
 
     completion = client.chat.completions.create(
-        model="meta-llama/Llama-3.1-8B-Instruct:novita",
+        model="meta-llama/Llama-3.1-8B-Instruct",
         messages=[
             {
                 "role": "system",
@@ -126,7 +126,7 @@ def conditional_routing(state: GraphState) -> str:
     if confidence_score >= 0.7:
         return "pass"
 
-    if attempts >= 3:
+    if attempts == 3:
         return "escalation"
 
     return "rewrite"

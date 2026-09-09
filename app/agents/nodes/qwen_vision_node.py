@@ -1,15 +1,15 @@
-# app/agents/nodes/qwen_vision_node.py
 import os
 import asyncio
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from agents.state import GraphState
-from huggingface_hub import InferenceClient
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(dotenv_path=BASE_DIR / ".env")
 
-# System prompt for structured vision analysis
 QWEN_INSTRUCTION = (
     "You are an incident-triage assistant and engineer. Analyze the uploaded ticket image carefully, "
     "including any visible text, screenshots, error messages, and interface elements. First, provide a faithful "
@@ -19,38 +19,30 @@ QWEN_INSTRUCTION = (
 )
 
 try:
-    from huggingface_hub import InferenceClient
+    from huggingface_hub import InferenceClient as _InferenceClient
 except Exception as import_error:  
-    InferenceClient = None  
+    _InferenceClient = None  
     _INFERENCE_CLIENT_IMPORT_ERROR = import_error
 else:
     _INFERENCE_CLIENT_IMPORT_ERROR = None
 
 
-def _build_client() -> "InferenceClient":
-    if InferenceClient is None:
+def _build_client():
+    if _InferenceClient is None:
         raise RuntimeError(
             "huggingface_hub is required for Qwen vision processing."
         ) from _INFERENCE_CLIENT_IMPORT_ERROR
 
-    return InferenceClient(
-        provider="hf-inference",
+    return _InferenceClient(
+        provider="featherless-ai",
         api_key=os.environ.get("HF_TOKEN"),
+        timeout=60.0,
     )
 
 
 client = None
-VISION_MODEL_CANDIDATES = [
-    os.getenv("QWEN_VISION_MODEL", "").strip(),
-    "Qwen/Qwen3-VL-8B-Instruct:featherless-ai",
-    "Qwen/Qwen3-VL-8B-Instruct:featherless-ai",
-    "Qwen/Qwen3-VL-8B-Instruct:novita",
-]
-VISION_MODEL_CANDIDATES = [
-    model_name
-    for model_name in VISION_MODEL_CANDIDATES
-    if model_name
-]
+VISION_MODEL = "Qwen/Qwen3-VL-8B-Instruct"
+# 
 
 async def process_ticket_image(state: GraphState) -> dict:
     global client
@@ -74,7 +66,6 @@ async def process_ticket_image(state: GraphState) -> dict:
     analyses = []
 
     for index, image_url in enumerate(images, start=1):
-       
         messages = [
             {
                 "role": "user",
@@ -85,24 +76,34 @@ async def process_ticket_image(state: GraphState) -> dict:
             }
         ]
 
-        last_error: Exception | None = None
         response = None
-        for model_name in VISION_MODEL_CANDIDATES:
+        last_error = None
+        
+        # Retry loop for model busy / 400 capacity errors
+        max_retries = 3
+        for attempt in range(max_retries):
             try:
                 response = await asyncio.to_thread(
                     client.chat.completions.create,
-                    model=model_name,
+                    model=VISION_MODEL,
                     messages=messages,
                     max_tokens=512,
                 )
-                break
+                if response:
+                    break
             except Exception as exc:
                 last_error = exc
+                logger.warning(
+                    f"Attempt {attempt + 1}/{max_retries} failed for Qwen vision model: {exc}. Retrying..."
+                )
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt * 2)  # Exponential backoff (2s, 4s...)
 
         if response is None:
-            raise RuntimeError(
-                "Qwen vision model request failed for all configured model names."
-            ) from last_error
+           
+            logger.error(f"Qwen vision model request failed after retries: {last_error}")
+            analyses.append(f"[Vision Analysis Unavailable: Qwen inference service busy]")
+            continue
 
         analysis_content = response.choices[0].message.content
         

@@ -156,8 +156,20 @@ async def startup(ctx: dict[str, Any]) -> None:
         sanitized_db_url,
         serde=JsonPlusSerializer(
             allowed_msgpack_modules=[
+                ("agents.state", "RagState"),
                 ("agents.state", "EvaluationResult"),
                 ("agents.state", "AIDraftResolution"),
+                ("agents.state", "HumanReviewPayload"),
+                ("agents.state", "GraphState"),
+                ("agents.state", "ApprovalDecision"),
+                ("agents.state", "UserTicketResponse"),
+                ("app.agents.state", "RagState"),
+                ("app.agents.state", "EvaluationResult"),
+                ("app.agents.state", "AIDraftResolution"),
+                ("app.agents.state", "HumanReviewPayload"),
+                ("app.agents.state", "GraphState"),
+                ("app.agents.state", "ApprovalDecision"),
+                ("app.agents.state", "UserTicketResponse"),
             ]
         ),
     )

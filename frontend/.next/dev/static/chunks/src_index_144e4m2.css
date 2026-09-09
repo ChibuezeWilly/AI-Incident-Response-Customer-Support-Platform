@@ -67,6 +67,8 @@
     --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
+    --color-red-300: #ffa3a3;
+    --color-red-400: #ff6568;
     --color-red-500: #fb2c36;
     --color-red-600: #e40014;
     --color-orange-400: #ff8b1a;
@@ -202,6 +204,8 @@
 
   @supports (color: lab(0% 0 0)) {
     :root, :host {
+      --color-red-300: lab(76.5514% 36.4219 15.5335);
+      --color-red-400: lab(63.7053% 60.7449 31.3109);
       --color-red-500: lab(55.4814% 75.0732 48.8528);
       --color-red-600: lab(48.4493% 77.4328 61.5452);
       --color-orange-400: lab(70.0429% 42.5156 75.8207);
@@ -969,6 +973,10 @@
     max-width: calc(var(--spacing) * 50);
   }
 
+  .max-w-56 {
+    max-width: calc(var(--spacing) * 56);
+  }
+
   .max-w-\[120px\] {
     max-width: 120px;
   }
@@ -1015,6 +1023,10 @@
 
   .shrink-0 {
     flex-shrink: 0;
+  }
+
+  .basis-full {
+    flex-basis: 100%;
   }
 
   .border-collapse {
@@ -2820,6 +2832,10 @@
     overflow-wrap: break-word;
   }
 
+  .whitespace-normal {
+    white-space: normal;
+  }
+
   .whitespace-nowrap {
     white-space: nowrap;
   }
@@ -2938,6 +2954,14 @@
 
   .text-orange-600 {
     color: var(--color-orange-600);
+  }
+
+  .text-red-300 {
+    color: var(--color-red-300);
+  }
+
+  .text-red-400 {
+    color: var(--color-red-400);
   }
 
   .text-red-500 {

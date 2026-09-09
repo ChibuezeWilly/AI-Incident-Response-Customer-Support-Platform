@@ -38,15 +38,22 @@ export async function apiRequest(path, options = {}) {
     if (token) {
         headers.set('Authorization', `Bearer ${token}`);
     }
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-        ...rest,
-        headers,
-        body: body === undefined
-            ? undefined
-            : body instanceof FormData
-                ? body
-                : JSON.stringify(body),
-    });
+    let response;
+    try {
+        response = await fetch(`${API_BASE_URL}${path}`, {
+            ...rest,
+            headers,
+            body: body === undefined
+                ? undefined
+                : body instanceof FormData
+                    ? body
+                    : JSON.stringify(body),
+        });
+    }
+    catch (error) {
+        const reason = error instanceof Error ? `: ${error.message}` : '';
+        throw new ApiError(`Unable to reach the API at ${API_BASE_URL}${reason}`, 0, error);
+    }
     if (!response.ok) {
         if (response.status === 401 && token && typeof window !== 'undefined') {
             window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED_EVENT));
