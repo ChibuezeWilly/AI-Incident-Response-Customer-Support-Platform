@@ -1,6 +1,5 @@
 import os
 import uuid
-from typing import Any
 import chromadb
 from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -8,27 +7,12 @@ from langchain_core.documents import Document
 from fastapi import status, HTTPException
 from agents.graph import get_graph
 from paths import PROJECT_ROOT
+from services.hf_inference import embed_texts
 
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")
 tenant_key = os.getenv("CHROMADB_TENANT")
 database_key = os.getenv("CHROMADB_DATABASE")
-
-_embedding_model: Any | None = None
-
-
-def _get_embedding_model() -> Any:
-    global _embedding_model
-
-    if _embedding_model is None:
-        from sentence_transformers import SentenceTransformer
-
-        _embedding_model = SentenceTransformer(
-            "sentence-transformers/all-MiniLM-L6-v2"
-        )
-
-    return _embedding_model
-
 
 class ChromaTicketSaver:
 
@@ -75,9 +59,7 @@ class ChromaTicketSaver:
             self.documents_list.append(record)
 
         looped_strings = [document.page_content for document in chunked_documents]
-        embedded_vectors = _get_embedding_model().encode(
-            looped_strings, show_progress_bar=False
-        )
+        embedded_vectors = embed_texts(looped_strings)
 
         return [vector.tolist() for vector in embedded_vectors]
 

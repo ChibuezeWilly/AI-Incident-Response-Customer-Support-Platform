@@ -4,6 +4,7 @@ from rank_bm25 import BM25Okapi
 import os
 from dotenv import load_dotenv
 from paths import PROJECT_ROOT
+from services.hf_inference import embed_texts
 
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 chromadb_api_key = os.getenv("CHROMADB_API_KEY")
@@ -15,7 +16,7 @@ class ExistingChromaHybridRetriever:
     def __init__(
         self,
         chroma_collection,
-        reranker_model_name="cross-encoder/ms-marco-MiniLM-L6-v2",
+        reranker_model_name="sentence-transformers/all-MiniLM-L6-v2",
         
     ):
         """
@@ -38,9 +39,7 @@ class ExistingChromaHybridRetriever:
         self.bm25 = BM25Okapi(tokenized_corpus)
 
         # 3. Load Cross-Encoder Reranker
-        from sentence_transformers import CrossEncoder
-
-        self.reranker = CrossEncoder(reranker_model_name)
+        self.reranker_model_name = reranker_model_name
        
 
     def sparse_search(self, query: str, top_k: int = 10):
@@ -77,9 +76,17 @@ class ExistingChromaHybridRetriever:
         if not candidate_ids:
             return []
 
-        #Cross-Encoder Rerank
-        pairs = [[query, self.id_to_text[doc_id]] for doc_id in candidate_ids]
-        rerank_scores = self.reranker.predict(pairs)
+        # Use remote embeddings for lightweight semantic reranking.
+        query_embedding = embed_texts([query], self.reranker_model_name)[0]
+        document_embeddings = embed_texts(
+            [self.id_to_text[doc_id] for doc_id in candidate_ids],
+            self.reranker_model_name,
+        )
+        query_norm = np.linalg.norm(query_embedding)
+        document_norms = np.linalg.norm(document_embeddings, axis=1)
+        rerank_scores = (document_embeddings @ query_embedding) / (
+            document_norms * query_norm + 1e-12
+        )
 
         scored_docs = [
             {"id": doc_id, "text": self.id_to_text[doc_id], "score": float(score)}

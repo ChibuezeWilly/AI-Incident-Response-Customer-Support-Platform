@@ -1,5 +1,4 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
 import uuid
 import chromadb
 from langchain_community.document_loaders import PyPDFLoader
@@ -8,6 +7,7 @@ from dotenv import load_dotenv
 from langchain_core.documents import Document
 from pathlib import Path
 from paths import PROJECT_ROOT
+from services.hf_inference import embed_texts
 
 # LOAD ENVIRONMENT VARIABLES
 load_dotenv(PROJECT_ROOT / ".env", override=True)
@@ -63,16 +63,11 @@ class INGESTION_MANAGER:
 
             self.documents_list.append(record)
 
-        # instantiate embedding model
-        embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
         # loop through each record in the document list to get the record and pass them into the emebdding model
         looped_strings = [document.page_content for document in chunked_documents]
 
         # embedded documents
-        embedded_vectors = embedding_model.encode(
-            looped_strings, show_progress_bar=True
-        )
+        embedded_vectors = embed_texts(looped_strings)
         return embedded_vectors
 
     def store_vectors(self):

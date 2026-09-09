@@ -157,10 +157,8 @@ rich-toolkit==0.19.9
 rignore==0.7.6
 rpds-py==2026.6.3
 rsa==4.9.1
-safetensors==0.8.0
 scikit-learn==1.9.0
 scipy==1.17.1
-sentence-transformers==6.0.1
 sentry-sdk==2.60.0
 setuptools==81.0.0
 shellingham==1.5.4
@@ -179,10 +177,7 @@ tenacity==9.1.4
 thinc==8.3.13
 threadpoolctl==3.6.0
 tldextract==5.3.2
-tokenizers==0.23.2
-torch==2.14.0
 tqdm==4.70.0
-transformers==5.16.1
 truststore==0.10.4
 typer==0.25.1
 typing-inspection==0.4.2

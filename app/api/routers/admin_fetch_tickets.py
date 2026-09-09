@@ -44,7 +44,10 @@ load_dotenv(PROJECT_ROOT / ".env", override=True)
 
 HUGGIN_FACE_TOKEN = os.getenv("HF_TOKEN")
 
-hf_client = InferenceClient(token=HUGGIN_FACE_TOKEN)
+hf_client = InferenceClient(
+    provider="hf-inference",
+    api_key=HUGGIN_FACE_TOKEN,
+)
 MODEL_ID = "meta-llama/Llama-3.1-8B-Instruct:novita"
 
 router = APIRouter(prefix="/admin/tickets", tags=["Admin Tickets"])

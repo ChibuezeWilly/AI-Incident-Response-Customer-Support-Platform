@@ -33,15 +33,18 @@ def _build_client() -> "InferenceClient":
             "huggingface_hub is required for Qwen vision processing."
         ) from _INFERENCE_CLIENT_IMPORT_ERROR
 
-    return InferenceClient(api_key=os.environ.get("HF_TOKEN"))
+    return InferenceClient(
+        provider="hf-inference",
+        api_key=os.environ.get("HF_TOKEN"),
+    )
 
 
 client = None
 VISION_MODEL_CANDIDATES = [
     os.getenv("QWEN_VISION_MODEL", "").strip(),
-    "Qwen/Qwen3-VL-8B-Instruct",
     "Qwen/Qwen3-VL-8B-Instruct:featherless-ai",
-    "Qwen/Qwen2.5-VL-7B-Instruct",
+    "Qwen/Qwen3-VL-8B-Instruct:featherless-ai",
+    "Qwen/Qwen3-VL-8B-Instruct:novita",
 ]
 VISION_MODEL_CANDIDATES = [
     model_name

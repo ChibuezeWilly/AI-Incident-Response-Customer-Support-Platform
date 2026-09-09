@@ -12,7 +12,7 @@ from database.postgres.database import get_db
 from model.schemas.schema import SemanticDiff
 
 
-client = InferenceClient(api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="hf-inference", api_key=os.getenv("HF_TOKEN"))
 
 parser = PydanticOutputParser(pydantic_object=SemanticDiff)
 

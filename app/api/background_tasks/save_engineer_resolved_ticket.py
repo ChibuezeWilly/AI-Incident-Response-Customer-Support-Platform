@@ -1,10 +1,10 @@
 import os
 import uuid
-from typing import Any
 import chromadb
 from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from paths import PROJECT_ROOT
+from services.hf_inference import embed_texts
 
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -12,21 +12,6 @@ CHROMADB_API_KEY = os.getenv("CHROMADB_API_KEY")
 CHROMADB_TENANT = os.getenv("CHROMADB_TENANT")
 CHROMADB_DATABASE = os.getenv("CHROMADB_DATABASE")
 
-
-_embedding_model: Any | None = None
-
-
-def _get_embedding_model() -> Any:
-    global _embedding_model
-
-    if _embedding_model is None:
-        from sentence_transformers import SentenceTransformer
-
-        _embedding_model = SentenceTransformer(
-            "sentence-transformers/all-MiniLM-L6-v2"
-        )
-
-    return _embedding_model
 
 class EmbedResolvedTicket:
 
@@ -72,10 +57,7 @@ class EmbedResolvedTicket:
             for document in documents
         ]
 
-        embeddings = _get_embedding_model().encode(
-            texts,
-            show_progress_bar=True,
-        )
+        embeddings = embed_texts(texts)
 
         return documents, embeddings
 

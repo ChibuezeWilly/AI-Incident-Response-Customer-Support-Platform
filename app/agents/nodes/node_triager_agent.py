@@ -7,7 +7,7 @@ from huggingface_hub import InferenceClient
 from model.schemas.schema import LlamaOutput
 from agents.state import GraphState
 
-client = InferenceClient(api_key=os.getenv("HF_TOKEN"))
+client = InferenceClient(provider="hf-inference", api_key=os.getenv("HF_TOKEN"))
 
 def extract_json_object(response_text: str) -> str:
     """
