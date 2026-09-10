@@ -674,7 +674,7 @@ export async function adminLogin(email, password) {
   });
   return { user: authUser(response, "admin"), token: response.token };
 }
-export async function userSignup(name, email, password) {
+export async function userSignup(name, email, password, accountTier, sla) {
   const response = await apiRequest(ENDPOINTS.auth.signup, {
     method: "POST",
     auth: false,
@@ -682,8 +682,8 @@ export async function userSignup(name, email, password) {
       business_name: name,
       email,
       password,
-      account_tier: "Standard",
-      sla: 24,
+      account_tier: accountTier,
+      sla,
     },
   });
   return {

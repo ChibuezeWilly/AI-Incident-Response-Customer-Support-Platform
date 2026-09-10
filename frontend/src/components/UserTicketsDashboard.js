@@ -31,6 +31,7 @@ export default function UserTicketsDashboard({
   const [feedback, setFeedback] = useState("");
   const [rewardStatus, setRewardStatus] = useState("");
   const [submittingReward, setSubmittingReward] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
   const [selectedTicketId, setSelectedTicketId] = useState(null);
 
@@ -90,6 +91,13 @@ export default function UserTicketsDashboard({
     );
   };
 
+  const hasSubmittedFeedback = (ticket) =>
+    Boolean(
+      ticket &&
+        ((ticket.userRating != null && Number(ticket.userRating) > 0) ||
+          ticket.userFeedback?.trim()),
+    );
+
   const exactSelectedTicket = useMemo(() => {
     if (selectedTicketId == null) {
       return null;
@@ -128,6 +136,7 @@ export default function UserTicketsDashboard({
       setRating(0);
       setFeedback("");
       setRewardStatus("");
+      setFeedbackSubmitted(false);
       return;
     }
 
@@ -136,7 +145,14 @@ export default function UserTicketsDashboard({
     setFeedback(exactSelectedTicket.userFeedback ?? "");
 
     setRewardStatus("");
-  }, [exactSelectedTicket?.id, exactSelectedTicket?.ticket_id]);
+    setFeedbackSubmitted(hasSubmittedFeedback(exactSelectedTicket));
+  }, [
+    exactSelectedTicket,
+    exactSelectedTicket?.id,
+    exactSelectedTicket?.ticket_id,
+    exactSelectedTicket?.userRating,
+    exactSelectedTicket?.userFeedback,
+  ]);
 
   const myTickets = useMemo(() => {
     return uniqueTickets
@@ -186,6 +202,7 @@ export default function UserTicketsDashboard({
         user_feedback: feedback.trim(),
       });
 
+      setFeedbackSubmitted(true);
       setRewardStatus("Thanks — your feedback has been saved.");
     } catch (error) {
       setRewardStatus(
@@ -828,6 +845,8 @@ export default function UserTicketsDashboard({
 
 
                   isResolvedTicket(exactSelectedTicket) &&
+                    !hasSubmittedFeedback(exactSelectedTicket) &&
+                    !feedbackSubmitted &&
                     String(
                       exactSelectedTicket.id ?? exactSelectedTicket.ticket_id,
                     ) === String(selectedTicketId) &&

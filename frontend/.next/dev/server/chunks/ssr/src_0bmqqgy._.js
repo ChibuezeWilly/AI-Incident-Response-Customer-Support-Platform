@@ -1663,7 +1663,7 @@ async function adminLogin(email, password) {
         token: response.token
     };
 }
-async function userSignup(name, email, password) {
+async function userSignup(name, email, password, accountTier, sla) {
     const response = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$client$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["apiRequest"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$endpoints$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ENDPOINTS"].auth.signup, {
         method: "POST",
         auth: false,
@@ -1671,8 +1671,8 @@ async function userSignup(name, email, password) {
             business_name: name,
             email,
             password,
-            account_tier: "Standard",
-            sla: 24
+            account_tier: accountTier,
+            sla
         }
     });
     return {
@@ -5843,17 +5843,19 @@ function SignupPage({ theme, onSignup, onSwitchToLogin }) {
     const [email, setEmail] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
     const [password, setPassword] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
     const [confirmPassword, setConfirmPassword] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
+    const [accountTier, setAccountTier] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("Standard");
+    const [sla, setSla] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("24");
     const [error, setError] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const isDark = theme === "dark";
     const submit = async (event)=>{
         event.preventDefault();
         setError("");
-        if (!name.trim() || !email.trim() || !password.trim()) return setError("Please fill in all fields.");
+        if (!name.trim() || !email.trim() || !password.trim() || !sla) return setError("Please fill in all fields.");
         if (password !== confirmPassword) return setError("Passwords do not match.");
         setLoading(true);
         try {
-            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$tickets$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["userSignup"])(name, email, password);
+            await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$tickets$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["userSignup"])(name, email, password, accountTier, Number(sla));
             const session = await (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$api$2f$tickets$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["userLogin"])(email, password);
             // Login returns the session token required before rendering protected data.
             onSignup(session.user, session.token);
@@ -5899,6 +5901,18 @@ function SignupPage({ theme, onSignup, onSwitchToLogin }) {
                                 "email"
                             ],
                             [
+                                "Account tier",
+                                accountTier,
+                                setAccountTier,
+                                "select"
+                            ],
+                            [
+                                "SLA (hours)",
+                                sla,
+                                setSla,
+                                "number"
+                            ],
+                            [
                                 "Password",
                                 password,
                                 setPassword,
@@ -5914,8 +5928,27 @@ function SignupPage({ theme, onSignup, onSwitchToLogin }) {
                                 className: "block font-mono text-base",
                                 children: [
                                     label,
-                                    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])("input", {
+                                    type === "select" ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxs"])("select", {
+                                        value: value,
+                                        onChange: (event)=>setter(event.target.value),
+                                        className: `mt-1 w-full rounded-xl text-base border p-3 ${isDark ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}`,
+                                        children: [
+                                            (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])("option", {
+                                                value: "Standard",
+                                                children: "Standard"
+                                            }),
+                                            (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])("option", {
+                                                value: "Premium",
+                                                children: "Premium"
+                                            }),
+                                            (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])("option", {
+                                                value: "Enterprise",
+                                                children: "Enterprise"
+                                            })
+                                        ]
+                                    }) : (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])("input", {
                                         type: type,
+                                        min: type === "number" ? 1 : undefined,
                                         value: value,
                                         onChange: (event)=>setter(event.target.value),
                                         className: `mt-1 w-full rounded-xl text-base border p-3 ${isDark ? "text-white" : "text-slate-900"}`
@@ -7511,6 +7544,7 @@ function UserTicketsDashboard({ tickets, user, theme, onSelectTicket, selectedTi
     const [feedback, setFeedback] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
     const [rewardStatus, setRewardStatus] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])("");
     const [submittingReward, setSubmittingReward] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [feedbackSubmitted, setFeedbackSubmitted] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const [selectedTicketId, setSelectedTicketId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const normalizeStatus = (status)=>String(status ?? "").trim().toUpperCase();
     const uniqueTickets = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
@@ -7546,6 +7580,7 @@ function UserTicketsDashboard({ tickets, user, theme, onSelectTicket, selectedTi
         }
         return ticket.finalResponseText || ticket.humanEditedText || ticket.aiDraftText || ticket.aiDraft?.fullResponseText || ticket.aiDraft?.full_response_text || "";
     };
+    const hasSubmittedFeedback = (ticket)=>Boolean(ticket && (ticket.userRating != null && Number(ticket.userRating) > 0 || ticket.userFeedback?.trim()));
     const exactSelectedTicket = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
         if (selectedTicketId == null) {
             return null;
@@ -7578,14 +7613,19 @@ function UserTicketsDashboard({ tickets, user, theme, onSelectTicket, selectedTi
             setRating(0);
             setFeedback("");
             setRewardStatus("");
+            setFeedbackSubmitted(false);
             return;
         }
         setRating(exactSelectedTicket.userRating ?? 0);
         setFeedback(exactSelectedTicket.userFeedback ?? "");
         setRewardStatus("");
+        setFeedbackSubmitted(hasSubmittedFeedback(exactSelectedTicket));
     }, [
+        exactSelectedTicket,
         exactSelectedTicket?.id,
-        exactSelectedTicket?.ticket_id
+        exactSelectedTicket?.ticket_id,
+        exactSelectedTicket?.userRating,
+        exactSelectedTicket?.userFeedback
     ]);
     const myTickets = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useMemo"])(()=>{
         return uniqueTickets.filter((t)=>String(t.userId ?? "") === String(user?.id ?? "") || t.userEmail === user?.email).sort((a, b)=>new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -7615,6 +7655,7 @@ function UserTicketsDashboard({ tickets, user, theme, onSelectTicket, selectedTi
                 user_rating: rating,
                 user_feedback: feedback.trim()
             });
+            setFeedbackSubmitted(true);
             setRewardStatus("Thanks — your feedback has been saved.");
         } catch (error) {
             setRewardStatus(error?.body?.detail || error?.message || "Unable to save feedback. Please try again.");
@@ -8019,7 +8060,7 @@ function UserTicketsDashboard({ tickets, user, theme, onSelectTicket, selectedTi
                                         })
                                     ]
                                 }),
-                                isResolvedTicket(exactSelectedTicket) && String(exactSelectedTicket.id ?? exactSelectedTicket.ticket_id) === String(selectedTicketId) && (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxs"])("section", {
+                                isResolvedTicket(exactSelectedTicket) && !hasSubmittedFeedback(exactSelectedTicket) && !feedbackSubmitted && String(exactSelectedTicket.id ?? exactSelectedTicket.ticket_id) === String(selectedTicketId) && (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxs"])("section", {
                                     className: `mt-7 p-4 rounded-xl border space-y-3 ${isDark ? "border-indigo-500/20 bg-indigo-500/5" : "border-indigo-200 bg-indigo-50"}`,
                                     children: [
                                         (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsx"])("p", {

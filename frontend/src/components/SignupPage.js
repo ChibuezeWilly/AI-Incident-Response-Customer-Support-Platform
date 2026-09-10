@@ -12,6 +12,8 @@ export default function SignupPage({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [accountTier, setAccountTier] = useState("Standard");
+  const [sla, setSla] = useState("24");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const isDark = theme === "dark";
@@ -20,14 +22,14 @@ export default function SignupPage({
     event.preventDefault();
     setError("");
     
-    if (!name.trim() || !email.trim() || !password.trim())
+    if (!name.trim() || !email.trim() || !password.trim() || !sla)
       return setError("Please fill in all fields.");
     if (password !== confirmPassword)
       return setError("Passwords do not match.");
       
     setLoading(true);
     try {
-      await userSignup(name, email, password);
+      await userSignup(name, email, password, accountTier, Number(sla));
 
       const session = await userLogin(email, password);
 
@@ -69,6 +71,8 @@ export default function SignupPage({
             [
               ["Business name", name, setName, "text"],
               ["Email", email, setEmail, "email"],
+              ["Account tier", accountTier, setAccountTier, "select"],
+              ["SLA (hours)", sla, setSla, "number"],
               ["Password", password, setPassword, "password"],
               [
                 "Confirm password",
@@ -83,12 +87,24 @@ export default function SignupPage({
                   className: "block font-mono text-base",
                   children: [
                     label,
-                    _jsx("input", {
-                      type: type,
-                      value: value,
-                      onChange: (event) => setter(event.target.value),
-                      className: `mt-1 w-full rounded-xl text-base border p-3 ${isDark ? "text-white" : "text-slate-900"}`,
-                    }),
+                    type === "select"
+                      ? _jsxs("select", {
+                          value: value,
+                          onChange: (event) => setter(event.target.value),
+                          className: `mt-1 w-full rounded-xl text-base border p-3 ${isDark ? "bg-zinc-900 text-white" : "bg-white text-slate-900"}`,
+                          children: [
+                            _jsx("option", { value: "Standard", children: "Standard" }),
+                            _jsx("option", { value: "Premium", children: "Premium" }),
+                            _jsx("option", { value: "Enterprise", children: "Enterprise" }),
+                          ],
+                        })
+                      : _jsx("input", {
+                          type: type,
+                          min: type === "number" ? 1 : undefined,
+                          value: value,
+                          onChange: (event) => setter(event.target.value),
+                          className: `mt-1 w-full rounded-xl text-base border p-3 ${isDark ? "text-white" : "text-slate-900"}`,
+                        }),
                   ],
                 },
                 label,
